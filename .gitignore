@@ -6,6 +6,7 @@ finance_manager.db
 .venv
 # Backend Python
 
+git_push.py
 frontend/node_modules
 __pycache__/
 *.py[cod]
