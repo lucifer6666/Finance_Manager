@@ -69,13 +69,13 @@ if db_exists:
         existing_columns = [col['name'] for col in inspector.get_columns('salaries')]
         
         if 'start_date' not in existing_columns:
-            print(f"  • Found missing column in salaries: start_date")
+            print("  • Found missing column in salaries: start_date")
             session = SessionLocal()
             try:
                 with engine.begin() as connection:
                     # Add start_date as nullable (SQLite limitation with DEFAULT)
-                    connection.execute(text(f'ALTER TABLE salaries ADD COLUMN start_date DATE'))
-                    print(f"    ✓ Added column: start_date")
+                    connection.execute(text('ALTER TABLE salaries ADD COLUMN start_date DATE'))
+                    print("    ✓ Added column: start_date")
                 print("✓ salaries table updated successfully")
             except Exception as e:
                 print(f"✗ Error adding column: {e}")

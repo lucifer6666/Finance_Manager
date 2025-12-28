@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 from datetime import date
 from sqlalchemy.orm import Session
 from .. import models, crud
@@ -169,7 +169,7 @@ def get_spending_trends(db: Session, months: int = 6) -> List[Dict]:
     return trends
 
 
-def calculate_credit_card_utilization(db: Session, card_id: int) -> Dict:
+def calculate_credit_card_utilization(db: Session, card_id: int) -> Union[Dict, None]:
     """Calculate credit card utilization percentage"""
     card = crud.get_credit_card(db, card_id)
     if not card:

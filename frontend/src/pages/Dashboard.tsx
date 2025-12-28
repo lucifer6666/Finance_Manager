@@ -5,7 +5,7 @@ import { analyticsApi } from '../api/client';
 
 export const Dashboard = () => {
   const now = new Date();
-  const { transactions, addTransaction } = useTransactions(now.getFullYear(), now.getMonth() + 1);
+  const { _, addTransaction } = useTransactions(now.getFullYear(), now.getMonth() + 1);
   const { analytics } = useAnalytics(now.getFullYear(), now.getMonth() + 1);
   const [spendingTrends, setSpendingTrends] = useState<any[]>([]);
 

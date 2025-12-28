@@ -36,7 +36,7 @@ def get_salary(
     """Get a salary by ID"""
     salary = crud.get_salary(db, salary_id)
     if not salary:
-        raise HTTPException(status_code=404, detail="Salary not found")
+        raise HTTPException(status_code=404, detail="Salary not found!")
     return salary
 
 

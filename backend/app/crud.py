@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 from typing import List, Optional
 
@@ -228,7 +228,7 @@ def update_salary(db: Session, salary_id: int, salary_update: schemas.SalaryUpda
         update_data = salary_update.dict(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_salary, field, value)
-        db_salary.updated_at = datetime.utcnow()
+        db_salary.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(db_salary)
     return db_salary
@@ -266,7 +266,7 @@ def process_monthly_salaries(db: Session) -> int:
                 category="Salary",
                 description=f"Monthly salary: {salary.name}",
                 payment_method="bank",
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.add(transaction)
             salary.last_added_date = today

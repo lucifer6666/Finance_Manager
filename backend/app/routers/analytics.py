@@ -24,7 +24,7 @@ def get_monthly_analytics(
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
     if year < 1900 or year > 2100:
-        raise HTTPException(status_code=400, detail="Year must be between 1900 and 2100")
+        raise HTTPException(status_code=400, detail="Year must be between 1910 and 2100")
     
     transactions = crud.get_transactions_by_month(db, year, month)
     summary = calculate_monthly_summary(transactions, db, year, month)

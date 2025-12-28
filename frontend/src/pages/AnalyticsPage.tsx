@@ -61,6 +61,16 @@ export const AnalyticsPage = () => {
     }).format(amount).replace('₹', '₹');
   };
 
+  const getInsightClass = (severity: string) => {
+    if (severity === 'alert') {
+      return 'bg-red-50 border-red-600';
+    } else if (severity === 'warning') {
+      return 'bg-yellow-50 border-yellow-600';
+    } else {
+      return 'bg-blue-50 border-blue-600';
+    }
+  };
+
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -109,7 +119,7 @@ export const AnalyticsPage = () => {
               <input
                 type="number"
                 value={year}
-                onChange={(e) => setYear(parseInt(e.target.value))}
+                onChange={(e) => setYear(Number.parseInt(e.target.value))}
                 min="2020"
                 max={new Date().getFullYear() + 1}
                 className="px-3 py-2 border rounded-md w-32 text-white bg-gray-700"
@@ -202,7 +212,7 @@ export const AnalyticsPage = () => {
               <input
                 type="number"
                 value={year}
-                onChange={(e) => setYear(parseInt(e.target.value))}
+                onChange={(e) => setYear(Number.parseInt(e.target.value))}
                 min="2020"
                 max={new Date().getFullYear() + 1}
                 className="px-3 py-2 border rounded-md w-32 text-white bg-gray-700"
@@ -212,7 +222,7 @@ export const AnalyticsPage = () => {
               <span>Month:</span>
               <select
                 value={month}
-                onChange={(e) => setMonth(parseInt(e.target.value))}
+                onChange={(e) => setMonth(Number.parseInt(e.target.value))}
                 className="px-3 py-2 border rounded-md text-white bg-gray-700"
               >
                 {months.map((m, idx) => (
@@ -309,13 +319,7 @@ export const AnalyticsPage = () => {
                     {insights.map((insight, idx) => (
                       <div
                         key={idx}
-                        className={`p-4 rounded-lg border-l-4 ${
-                          insight.severity === 'alert'
-                            ? 'bg-red-50 border-red-600'
-                            : insight.severity === 'warning'
-                            ? 'bg-yellow-50 border-yellow-600'
-                            : 'bg-blue-50 border-blue-600'
-                        }`}
+                        className={`p-4 rounded-lg border-l-4 ${getInsightClass(insight.severity)}`}
                       >
                         <p className="text-black">
                           {insight.severity === 'alert' ? '⚠️ ' : insight.severity === 'warning' ? '⚡ ' : 'ℹ️ '}
