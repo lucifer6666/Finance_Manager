@@ -106,4 +106,28 @@ export const analyticsApi = {
     axiosInstance.get<Analytics>('/analytics/summary/current'),
 };
 
+// Salary APIs
+export const salaryApi = {
+  create: (salary: { name: string; amount: number; is_active?: boolean; description?: string }) =>
+    axiosInstance.post('/salaries/', salary),
+  
+  getAll: () =>
+    axiosInstance.get('/salaries/'),
+  
+  getActive: () =>
+    axiosInstance.get('/salaries/active'),
+  
+  getById: (id: number) =>
+    axiosInstance.get(`/salaries/${id}`),
+  
+  update: (id: number, salary: { name?: string; amount?: number; is_active?: boolean; description?: string }) =>
+    axiosInstance.put(`/salaries/${id}`, salary),
+  
+  delete: (id: number) =>
+    axiosInstance.delete(`/salaries/${id}`),
+  
+  processMonthly: () =>
+    axiosInstance.post('/salaries/process/monthly'),
+};
+
 export default axiosInstance;

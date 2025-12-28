@@ -108,3 +108,5 @@ logs/
 # IDE specific
 .vscode/settings.json
 .vscode/extensions.json
+backend.bat
+frontend.bat

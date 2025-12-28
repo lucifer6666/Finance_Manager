@@ -1,9 +1,9 @@
 # Finance Manager - Project Memory & Development Log
 
 ## Project Overview
-A full-stack personal finance management application built with React + FastAPI for tracking transactions, credit cards, and investments with recurring auto-entry support.
+A full-stack personal finance management application built with React + FastAPI for tracking transactions, credit cards, and investments with recurring auto-entry support and salary management.
 
-**Current Date**: December 27, 2025
+**Current Date**: December 28, 2025
 
 ## Session History
 
@@ -20,12 +20,40 @@ A full-stack personal finance management application built with React + FastAPI 
 - Changed form inputs to white text on gray-700 background
 - Fixed database schema mismatch (added missing `purchase_date` column)
 
-### Session 3: Recurring Investments Feature (Current)
+### Session 3: Recurring Investments Feature
 - Added recurring investment support to database schema
 - Implemented auto-entry functionality for monthly/yearly contributions
 - Updated frontend form with recurring options
 - Enhanced database initialization to preserve existing data
 - Created comprehensive documentation
+
+### Session 4: Advanced Analytics & Salary Management (Current)
+- **Enhanced Analytics**:
+  - Added monthly analysis view with category breakdown
+  - Added category distribution pie charts
+  - Added insights and recommendations based on spending patterns
+  - Integrated investment tracking into expense analysis
+  - Display investments as a category in charts
+  - Subtract investments from savings calculation
+  
+- **Investment Calculation Updates**:
+  - Only count recurring investments as monthly equivalent (not initial amount)
+  - Yearly recurring investments divided by 12 for monthly display
+  - Non-recurring investments counted only in purchase month
+  - Investments shown separately and in category breakdown
+  
+- **Salary Management System**:
+  - Created Salary model for recurring income entries
+  - Implemented auto-entry on 1st of each month
+  - Full CRUD operations for salary management
+  - Frontend UI for adding/editing/deleting salaries
+  - Active/Inactive toggle for salary control
+  - Backend CRUD operations in `crud.py`
+  - New salary router at `/api/salaries`
+  - **NEW**: Added `start_date` field to track when salary was initialized
+  - Display "Started: MM/DD/YYYY" in salary list
+  - Support for editing existing salary start dates
+
 **Backend:**
 - FastAPI 0.104.1 - REST API framework
 - SQLAlchemy 2.0.23 - ORM for database operations
@@ -48,25 +76,44 @@ Finance_Manager/
 │   ├── app/
 │   │   ├── main.py - FastAPI app initialization
 │   │   ├── database.py - SQLAlchemy setup
-│   │   ├── models.py - ORM models (Transaction, CreditCard, SavingsInvestment)
+│   │   ├── models.py - ORM models (Transaction, CreditCard, SavingsInvestment, Salary)
 │   │   ├── schemas.py - Pydantic validation schemas
 │   │   ├── crud.py - Database CRUD operations
 │   │   ├── routers/
 │   │   │   ├── transactions.py
 │   │   │   ├── cards.py
 │   │   │   ├── analytics.py
-│   │   │   └── savings.py
+│   │   │   ├── savings.py
+│   │   │   └── salary.py (NEW)
 │   │   └── utils/
 │   │       └── analytics.py - Calculation functions
 │   ├── requirements.txt
 │   └── finance_manager.db (auto-created)
 └── frontend/
     ├── src/
-    │   ├── pages/ - React page components
-    │   ├── components/ - Reusable components
-    │   ├── services/ - API service layer
-    │   ├── App.tsx - Main app component
-    │   └── index.css - Global styles
+    │   ├── pages/
+    │   │   ├── Dashboard.tsx
+    │   │   ├── TransactionsPage.tsx
+    │   │   ├── CreditCardsPage.tsx
+    │   │   ├── SavingsPage.tsx
+    │   │   ├── AnalyticsPage.tsx
+    │   │   └── SalaryPage.tsx (NEW)
+    │   ├── components/
+    │   │   ├── AddTransactionForm.tsx
+    │   │   ├── AddSavingsForm.tsx
+    │   │   ├── SalaryManagement.tsx (NEW)
+    │   │   ├── CategoryPieChart.tsx
+    │   │   ├── MonthlyChart.tsx
+    │   │   └── ... other components
+    │   ├── hooks/
+    │   │   ├── useTransactions.ts
+    │   │   ├── useCreditCards.ts
+    │   │   ├── useSavings.ts
+    │   │   ├── useAnalytics.ts
+    │   │   └── useSalaries.ts (NEW)
+    │   ├── api/
+    │   │   └── client.ts - API client with all endpoints
+    │   └── App.tsx - Main app with routing
     └── package.json
 ```
 
@@ -97,7 +144,68 @@ Finance_Manager/
 - `id` (Integer, Primary Key)
 - `name` (String)
 - `investment_type` (String: "mutual_fund", "life_insurance", "fixed_deposit", "stock", "crypto", "other")
-- `purchase_date` (Date) ⭐ **CRITICAL: This column was missing - now added**
+- `purchase_date` (Date)
+- `initial_amount` (Float)
+- `current_value` (Float)
+- `description` (String, nullable)
+- `is_recurring` (Integer: 0 or 1)
+- `recurring_type` (String: "monthly" or "yearly")
+- `recurring_amount` (Float)
+- `last_recurring_date` (Date)
+- `created_at` (DateTime)
+- `updated_at` (DateTime)
+
+### Salary (NEW)
+- `id` (Integer, Primary Key)
+- `name` (String) - e.g., "Primary Salary", "Bonus"
+- `amount` (Float) - Monthly salary amount
+- `start_date` (Date) - When salary was initialized (NEW in Session 5)
+- `is_active` (Integer: 0 or 1) - Toggle for auto-entry
+- `description` (String, nullable)
+- `last_added_date` (Date) - Track when salary was last auto-added
+- `created_at` (DateTime)
+- `updated_at` (DateTime)
+
+## API Endpoints
+
+### Transactions (`/api/transactions`)
+- `GET /` - List all transactions
+- `POST /` - Create transaction
+- `GET /{id}` - Get transaction by ID
+- `PUT /{id}` - Update transaction
+- `DELETE /{id}` - Delete transaction
+
+### Credit Cards (`/api/cards`)
+- `GET /` - List all credit cards
+- `POST /` - Create credit card
+- `GET /{id}` - Get card by ID
+- `PUT /{id}` - Update card
+- `DELETE /{id}` - Delete card
+- `GET /{id}/billing` - Get billing cycle info
+
+### Savings/Investments (`/api/savings`)
+- `GET /` - List all investments
+- `POST /` - Create investment
+- `GET /comparison/current` - Get savings vs investment comparison
+- `GET /{id}` - Get investment by ID
+- `PUT /{id}` - Update investment
+- `DELETE /{id}` - Delete investment
+
+### Analytics (`/api/analytics`)
+- `GET /monthly/{year}/{month}` - Get monthly analytics with category breakdown
+- `GET /yearly/{year}` - Get yearly analytics with monthly breakdown
+- `GET /insights/{year}/{month}` - Get insights and recommendations
+- `GET /trends/spending?months=12` - Get spending trends for last N months
+- `GET /summary/current` - Get current month summary with insights
+
+### Salaries (`/api/salaries`) (NEW)
+- `GET /` - Get all salaries
+- `POST /` - Create salary entry
+- `GET /active` - Get only active salaries
+- `GET /{id}` - Get salary by ID
+- `PUT /{id}` - Update salary
+- `DELETE /{id}` - Delete salary
+- `POST /process/monthly` - Process auto-entry (runs on 1st of month)
 - `initial_amount` (Float)
 - `current_value` (Float)
 - `description` (String, nullable)
@@ -412,6 +520,23 @@ Recommended testing strategy:
 - Unit tests for CRUD operations
 - Integration tests for API endpoints
 - Component tests for React components
+
+### Session 5: Salary Start Date Enhancement (Current)
+- **Fixed Salary Button**: Removed `handleCancel()` from button onClick to properly toggle form visibility
+- **Added Start Date Tracking**:
+  - Added `start_date` field to Salary model (Date column)
+  - Updated schemas to support start_date as optional field (handles legacy NULL values)
+  - Updated database initialization script to add start_date column with NULL default
+  - Frontend form now includes date picker for start_date
+  - Display "Started: MM/DD/YYYY" in salary list
+  - Support for editing salary start dates
+  - Handle existing salaries with no start_date (display "Not set")
+- **Bug Fixes**:
+  - Fixed analytics endpoint to include investments field in MonthlySummary response
+  - Made start_date optional to support existing records without dates
+- **Database Migration**: 
+  - Created robust migration script handling SQLite limitations
+  - Added start_date column with text() wrapper for raw SQL execution
 - E2E tests for user workflows
 
 Use pytest (backend) and Vitest/Jest (frontend).

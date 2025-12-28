@@ -42,16 +42,20 @@ export const AddSavingsForm = ({ onAdd, loading = false }: AddSavingsFormProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const initialAmount = Number.parseFloat(formData.initial_amount);
+      const currentValueAmount = formData.current_value ? Number.parseFloat(formData.current_value) : initialAmount;
+      const recurringAmountValue = formData.recurring_amount ? Number.parseFloat(formData.recurring_amount) : initialAmount;
+
       await onAdd({
         name: formData.name,
         investment_type: formData.investment_type,
         purchase_date: formData.purchase_date,
-        initial_amount: parseFloat(formData.initial_amount),
-        current_value: parseFloat(formData.current_value),
+        initial_amount: initialAmount,
+        current_value: currentValueAmount,
         description: formData.description || undefined,
         is_recurring: formData.is_recurring,
         recurring_type: formData.is_recurring ? formData.recurring_type : undefined,
-        recurring_amount: formData.is_recurring ? parseFloat(formData.recurring_amount) : undefined,
+        recurring_amount: formData.is_recurring ? recurringAmountValue : undefined,
       });
       setFormData({
         name: '',

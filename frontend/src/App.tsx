@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Dashboard, TransactionsPage, CreditCardsPage, AnalyticsPage, SavingsPage } from './pages';
+import { Dashboard, TransactionsPage, CreditCardsPage, AnalyticsPage, SavingsPage, SalaryPage } from './pages';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -14,6 +14,7 @@ function App() {
             <Route path="/cards" element={<CreditCardsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/savings" element={<SavingsPage />} />
+            <Route path="/salary" element={<SalaryPage />} />
           </Routes>
         </main>
       </div>

@@ -1,7 +1,13 @@
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 
+interface CategoryData {
+  name: string;
+  amount?: number;
+  value?: number;
+}
+
 interface CategoryPieChartProps {
-  data: Array<[string, number]>;
+  data: Array<[string, number] | CategoryData>;
   title?: string;
 }
 
@@ -16,7 +22,13 @@ export const CategoryPieChart = ({ data, title = 'Spending by Category' }: Categ
     );
   }
 
-  const chartData = data.map(([name, value]) => ({ name, value }));
+  const chartData = data.map((item) => {
+    if (Array.isArray(item)) {
+      const [name, value] = item;
+      return { name, value };
+    }
+    return { name: item.name, value: item.amount || item.value || 0 };
+  });
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">

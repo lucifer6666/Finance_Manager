@@ -1,6 +1,6 @@
 # 💰 Finance Manager
 
-A full-stack personal finance management application for tracking transactions, credit cards, and investment portfolio with recurring investment support.
+A full-stack personal finance management application for tracking transactions, credit cards, salary, and investment portfolio with recurring auto-entry support and advanced analytics.
 
 ## 🚀 Quick Start
 
@@ -39,6 +39,13 @@ Frontend runs on: `http://localhost:5173`
 - Link transactions to credit cards
 - Multiple payment methods (Cash, Card, UPI, Bank)
 
+### Salary Management (NEW)
+- Set up recurring monthly salary
+- Automatic entry on 1st of each month
+- Edit/update salary amount anytime
+- Toggle active/inactive status
+- Track salary history with last added date
+
 ### Credit Card Management
 - Track multiple credit cards
 - Configure billing cycles and due dates
@@ -49,17 +56,24 @@ Frontend runs on: `http://localhost:5173`
 - Record investments (Mutual Funds, Stocks, Life Insurance, Crypto, etc.)
 - Track initial amount and current value
 - Calculate profit/loss
-- **NEW: Auto-entry for recurring investments**
+- Auto-entry for recurring investments
   - Monthly recurring contributions
-  - Yearly recurring contributions
+  - Yearly recurring contributions (divided by 12 for monthly calculation)
   - Automatic value updates
 
 ### Analytics & Insights
-- Monthly and yearly summaries
-- Income vs expense breakdown
-- Category-wise spending analysis
-- Savings comparison (Account vs Investments)
-- Investment performance tracking
+- **Dashboard**: Quick overview with income, expense, investments, and savings
+- **Spending Trends**: 12-month trend analysis with monthly breakdown
+- **Monthly Analysis**: Deep-dive into specific months with:
+  - Income, Expense, Investments, and Savings breakdown
+  - Category-wise expense distribution
+  - Pie charts for visual analysis
+  - AI-generated insights and recommendations
+- **Category Analysis**: 
+  - Expense categories with percentages
+  - Investments shown as a category
+  - Top spending categories highlighted
+- **Yearly Summaries**: Full year overview with monthly breakdowns
 
 ## 🏗️ Technology Stack
 
@@ -86,18 +100,181 @@ Finance_Manager/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app setup
 │   │   ├── database.py          # SQLAlchemy configuration
-│   │   ├── models.py            # ORM models
+│   │   ├── models.py            # ORM models (Transaction, CreditCard, SavingsInvestment, Salary)
 │   │   ├── schemas.py           # Pydantic schemas
 │   │   ├── crud.py              # Database operations
 │   │   ├── routers/
 │   │   │   ├── transactions.py  # Transaction endpoints
 │   │   │   ├── cards.py         # Credit card endpoints
 │   │   │   ├── analytics.py     # Analytics endpoints
-│   │   │   └── savings.py       # Investment endpoints
+│   │   │   ├── savings.py       # Investment endpoints
+│   │   │   └── salary.py        # Salary endpoints (NEW)
 │   │   └── utils/
-│   │       └── analytics.py     # Calculation utilities
+│   │       └── analytics.py     # Calculation utilities (updated for investments)
 │   ├── requirements.txt
 │   ├── init_db.py              # Database initialization
+│   └── finance_manager.db      # SQLite database (auto-created)
+└── frontend/
+    ├── src/
+    │   ├── pages/
+    │   │   ├── Dashboard.tsx         # Main dashboard
+    │   │   ├── TransactionsPage.tsx  # Transaction management
+    │   │   ├── CreditCardsPage.tsx   # Credit card management
+    │   │   ├── SavingsPage.tsx       # Investment portfolio
+    │   │   ├── SalaryPage.tsx        # Salary management (NEW)
+    │   │   ├── AnalyticsPage.tsx     # Advanced analytics with monthly analysis
+    │   │   └── index.ts
+    │   ├── components/
+    │   │   ├── AddTransactionForm.tsx
+    │   │   ├── AddSavingsForm.tsx
+    │   │   ├── SalaryManagement.tsx   # Salary UI component (NEW)
+    │   │   ├── CategoryPieChart.tsx
+    │   │   ├── MonthlyChart.tsx
+    │   │   ├── CreditCardSummary.tsx
+    │   │   ├── TransactionTable.tsx
+    │   │   ├── SavingsInvestmentTable.tsx
+    │   │   ├── InsightPanel.tsx
+    │   │   └── Navbar.tsx
+    │   ├── hooks/
+    │   │   ├── useTransactions.ts
+    │   │   ├── useCreditCards.ts
+    │   │   ├── useSavings.ts
+    │   │   ├── useAnalytics.ts
+    │   │   └── useSalaries.ts         # Salary management hook (NEW)
+    │   ├── api/
+    │   │   └── client.ts             # API client with salary endpoints (updated)
+    │   ├── types/
+    │   │   └── index.ts              # TypeScript type definitions
+    │   ├── App.tsx                   # Main app with routing
+    │   └── index.css
+    ├── package.json
+    └── vite.config.ts
+```
+
+## 📊 Key Features Explained
+
+### Salary Auto-Entry System
+- Create salary entries with:
+  - **Name**: Salary identifier (e.g., "Primary Salary", "Bonus")
+  - **Monthly Amount**: The recurring amount
+  - **Start Date**: When the salary was initialized (NEW - Session 5)
+  - **Active Status**: Toggle to enable/disable auto-entry
+  - **Description**: Optional notes
+- System automatically creates income transactions on 1st of month
+- Salaries appear in Analytics and Dashboard
+- Can be toggled active/inactive to pause auto-entry
+- Track salary history with "Started" and "Last Added" dates
+
+### Investment Calculation Logic
+- **Non-recurring investments**: Counted only in purchase month
+- **Monthly recurring**: Full amount counted each month
+- **Yearly recurring**: Divided by 12 and counted as monthly equivalent
+- **In Analytics**: Investments display separately AND as a category in breakdowns
+
+### Monthly Analysis Page
+- Toggle between "Spending Trends" (12-month) and "Monthly Analysis" (deep-dive)
+- Monthly Analysis includes:
+  - Summary cards showing Income, Expense, Investments, Savings, and Savings Rate
+  - Category distribution pie chart
+  - Detailed category breakdown with amounts and percentages
+  - AI-generated insights based on spending patterns
+
+## 🔄 Data Flow
+
+```
+Frontend (React + TypeScript)
+    ↓ (HTTP with Axios)
+API Routes (FastAPI routers)
+    ↓
+Business Logic (CRUD operations)
+    ↓
+Database (SQLite with SQLAlchemy ORM)
+    ↓
+Analytics Utils (Calculate summaries and insights)
+```
+
+## 🚦 Running the Application
+
+### Development Mode
+
+Terminal 1 (Backend):
+```bash
+cd backend
+python -m uvicorn app.main:app --reload
+```
+
+Terminal 2 (Frontend):
+```bash
+cd frontend
+npm run dev
+```
+
+Then open `http://localhost:5173` in your browser.
+
+### API Documentation
+Once backend is running, visit `http://localhost:8000/docs` for interactive API documentation.
+
+## 📈 Current Statistics
+
+- **Models**: 4 (Transaction, CreditCard, SavingsInvestment, Salary)
+- **API Endpoints**: 30+ endpoints across 5 routers
+- **Pages**: 6 (Dashboard, Transactions, Cards, Savings, Analytics, Salary)
+- **Components**: 15+ reusable React components
+- **Hooks**: 5 custom React hooks for data management
+
+## 🐛 Known Issues & Fixes
+
+### ✅ Fixed Issues
+- December date calculation bug (year rollover)
+- Route ordering in savings router
+- Database schema mismatch (purchase_date column)
+- Pydantic validation for top_categories
+- Investment calculation to prevent double-counting
+- Dashboard crashes when investments present
+
+## 🔒 Security Notes
+
+1. **CORS**: Currently allows all origins (update for production)
+2. **Authentication**: Not implemented (add before production)
+3. **Input Validation**: All inputs validated via Pydantic
+4. **SQL Injection**: Protected via SQLAlchemy ORM
+5. **Rate Limiting**: Not implemented (add before public release)
+
+## 🔮 Future Enhancements
+
+- [ ] User authentication and multi-user support
+- [ ] Data export to CSV/Excel
+- [ ] Budget alerts and notifications
+- [ ] Tax report generation
+- [ ] Multi-currency support
+- [ ] Investment goal tracking
+- [ ] Recurring expense templates
+- [ ] Mobile app (React Native)
+- [ ] Dark mode
+- [ ] Advanced filtering and search
+- [ ] Data backup and restore functionality
+
+## 📝 Important Notes
+
+1. **Database**: SQLite file created automatically in backend folder
+2. **CORS**: Configure for production use
+3. **Hot Reload**: Both frontend and backend support hot reload in dev mode
+4. **Date Format**: All dates stored as ISO format (YYYY-MM-DD)
+5. **Investment Logic**: Yearly recurring investments are smart-calculated as monthly equivalent
+6. **Salary Processing**: Happens daily, but only processes on 1st of month
+
+## 🤝 Contributing
+
+When adding new features:
+1. Update both backend and frontend simultaneously
+2. Update MEMORY.md with session notes
+3. Update README.md with new features
+4. Test thoroughly with sample data
+5. Keep TypeScript and Python type hints strict
+
+## 📞 Support
+
+For issues or questions about the application, refer to the API documentation at `/docs` endpoint when backend is running.
 │   └── finance.db              # SQLite database (auto-created)
 │
 ├── frontend/

@@ -6,4 +6,4 @@ export { CreditCardSummary } from './CreditCardSummary';
 export { InsightPanel } from './InsightPanel';
 export { SavingsComparisonCard } from './SavingsComparisonCard';
 export { SavingsInvestmentTable } from './SavingsInvestmentTable';
-export { AddSavingsForm } from './AddSavingsForm';
+export { AddSavingsForm } from './AddSavingsForm';export { SalaryManagement } from './SalaryManagement';

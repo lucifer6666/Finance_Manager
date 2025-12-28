@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import transactions, cards, analytics, savings
+from .routers import transactions, cards, analytics, savings, salary
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
@@ -45,6 +45,12 @@ app.include_router(
     savings.router,
     prefix="/api/savings",
     tags=["Savings & Investments"]
+)
+
+app.include_router(
+    salary.router,
+    prefix="/api/salaries",
+    tags=["Salaries"]
 )
 
 

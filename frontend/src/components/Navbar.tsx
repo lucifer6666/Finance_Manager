@@ -10,6 +10,7 @@ const Navbar = () => {
     { path: '/transactions', label: 'Transactions' },
     { path: '/cards', label: 'Credit Cards' },
     { path: '/savings', label: 'Savings' },
+    { path: '/salary', label: 'Salary' },
     { path: '/analytics', label: 'Analytics' },
   ];
 

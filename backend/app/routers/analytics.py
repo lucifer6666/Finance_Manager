@@ -27,14 +27,18 @@ def get_monthly_analytics(
         raise HTTPException(status_code=400, detail="Year must be between 1900 and 2100")
     
     transactions = crud.get_transactions_by_month(db, year, month)
-    summary = calculate_monthly_summary(transactions)
+    summary = calculate_monthly_summary(transactions, db, year, month)
+    
+    # Convert top_categories list of dicts to list of CategoryExpense objects
+    categories = [schemas.CategoryExpense(**cat) for cat in summary["top_categories"]]
     
     return schemas.MonthlySummary(
         month=f"{year}-{month:02d}",
         total_income=summary["total_income"],
         total_expense=summary["total_expense"],
         savings=summary["savings"],
-        top_categories=summary["top_categories"]
+        investments=summary["investments"],
+        top_categories=categories
     )
 
 
@@ -71,7 +75,7 @@ def get_insights(
         raise HTTPException(status_code=400, detail="Year must be between 1900 and 2100")
     
     transactions = crud.get_transactions_by_month(db, year, month)
-    summary = calculate_monthly_summary(transactions)
+    summary = calculate_monthly_summary(transactions, db, year, month)
     insights_list = generate_insights(summary)
     
     return [schemas.Insight(**insight) for insight in insights_list]
@@ -92,15 +96,18 @@ def get_current_summary(db: Session = Depends(get_db)):
     """Get current month's analytics with insights"""
     now = datetime.now()
     transactions = crud.get_transactions_by_month(db, now.year, now.month)
-    summary_data = calculate_monthly_summary(transactions)
+    summary_data = calculate_monthly_summary(transactions, db, now.year, now.month)
     insights_data = generate_insights(summary_data)
+    
+    top_categories = [schemas.CategoryExpense(**cat) for cat in summary_data["top_categories"]]
     
     monthly_summary = schemas.MonthlySummary(
         month=f"{now.year}-{now.month:02d}",
         total_income=summary_data["total_income"],
         total_expense=summary_data["total_expense"],
         savings=summary_data["savings"],
-        top_categories=summary_data["top_categories"]
+        investments=summary_data.get("investments", 0.0),
+        top_categories=top_categories
     )
     
     insights = [schemas.Insight(**insight) for insight in insights_data]

@@ -4,24 +4,52 @@ from sqlalchemy.orm import Session
 from .. import models, crud
 
 
-def calculate_monthly_summary(transactions: List[models.Transaction]) -> Dict:
-    """Calculate monthly analytics from transactions"""
+def calculate_monthly_summary(transactions: List[models.Transaction], db: Session = None, year: int = None, month: int = None) -> Dict:
+    """Calculate monthly analytics from transactions, subtracting investments from savings"""
     income = sum(t.amount for t in transactions if t.type == "income")
     expense = sum(t.amount for t in transactions if t.type == "expense")
     
-    # Calculate category distribution
+    # Calculate investments for this month
+    investments_total = 0
+    if db and year and month:
+        # Get all savings/investments
+        all_investments = db.query(models.SavingsInvestment).all()
+        
+        for inv in all_investments:
+            # Only count recurring investments as monthly equivalents
+            if inv.is_recurring:
+                # For yearly recurring investments, divide by 12 to get monthly equivalent
+                if inv.recurring_type == "yearly":
+                    monthly_equivalent = inv.recurring_amount / 12 if inv.recurring_amount else 0
+                    investments_total += monthly_equivalent
+                # For monthly recurring investments, add full recurring amount
+                elif inv.recurring_type == "monthly":
+                    investments_total += inv.recurring_amount if inv.recurring_amount else 0
+            # For non-recurring investments, only count in the month they were purchased
+            elif inv.purchase_date.year == year and inv.purchase_date.month == month:
+                investments_total += inv.initial_amount
+    
+    # Calculate category distribution (expenses + investments)
     category_map = {}
     for t in transactions:
         if t.type == "expense":
             category_map[t.category] = category_map.get(t.category, 0) + t.amount
     
+    # Add investments as a category if there are any
+    if investments_total > 0:
+        category_map["Investments"] = round(investments_total, 2)
+    
     # Sort categories by amount (descending)
-    top_categories = sorted(category_map.items(), key=lambda x: x[1], reverse=True)
+    top_categories_tuples = sorted(category_map.items(), key=lambda x: x[1], reverse=True)
+    
+    # Convert tuples to dictionaries for Pydantic compatibility
+    top_categories = [{"name": cat[0], "amount": round(cat[1], 2)} for cat in top_categories_tuples]
     
     return {
         "total_income": round(income, 2),
         "total_expense": round(expense, 2),
-        "savings": round(income - expense, 2),
+        "investments": round(investments_total, 2),
+        "savings": round(income - expense - investments_total, 2),
         "top_categories": top_categories
     }
 
@@ -73,10 +101,10 @@ def generate_insights(summary: Dict) -> List[Dict]:
     if summary["top_categories"]:
         top_category = summary["top_categories"][0]
         if total_expense > 0:
-            category_ratio = (top_category[1] / total_expense) * 100
+            category_ratio = (top_category["amount"] / total_expense) * 100
             if category_ratio > 40:
                 insights.append({
-                    "message": f"{top_category[0]} accounts for {category_ratio:.1f}% of your expenses. Consider budgeting this category.",
+                    "message": f"{top_category['name']} accounts for {category_ratio:.1f}% of your expenses. Consider budgeting this category.",
                     "severity": "info"
                 })
     
@@ -89,19 +117,22 @@ def get_yearly_summary(db: Session, year: int) -> Dict:
     
     yearly_income = 0
     yearly_expense = 0
+    yearly_investments = 0
     monthly_breakdown = []
     
     for month in range(1, 13):
         transactions = crud.get_transactions_by_month(db, year, month)
-        monthly_data = calculate_monthly_summary(transactions)
+        monthly_data = calculate_monthly_summary(transactions, db, year, month)
         
         yearly_income += monthly_data["total_income"]
         yearly_expense += monthly_data["total_expense"]
+        yearly_investments += monthly_data["investments"]
         
         monthly_breakdown.append({
             "month": f"{year}-{month:02d}",
             "income": monthly_data["total_income"],
             "expense": monthly_data["total_expense"],
+            "investments": monthly_data["investments"],
             "savings": monthly_data["savings"]
         })
     
@@ -109,7 +140,8 @@ def get_yearly_summary(db: Session, year: int) -> Dict:
         "year": year,
         "total_income": round(yearly_income, 2),
         "total_expense": round(yearly_expense, 2),
-        "savings": round(yearly_income - yearly_expense, 2),
+        "investments": round(yearly_investments, 2),
+        "savings": round(yearly_income - yearly_expense - yearly_investments, 2),
         "monthly_breakdown": monthly_breakdown
     }
 
@@ -124,12 +156,13 @@ def get_spending_trends(db: Session, months: int = 6) -> List[Dict]:
     for i in range(months, 0, -1):
         target_date = current_date - timedelta(days=30 * (i - 1))
         transactions = crud.get_transactions_by_month(db, target_date.year, target_date.month)
-        summary = calculate_monthly_summary(transactions)
+        summary = calculate_monthly_summary(transactions, db, target_date.year, target_date.month)
         
         trends.append({
             "month": f"{target_date.year}-{target_date.month:02d}",
             "income": summary["total_income"],
             "expense": summary["total_expense"],
+            "investments": summary["investments"],
             "savings": summary["savings"]
         })
     

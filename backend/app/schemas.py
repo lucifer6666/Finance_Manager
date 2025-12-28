@@ -47,12 +47,18 @@ class CreditCard(CreditCardBase):
         from_attributes = True
 
 
+class CategoryExpense(BaseModel):
+    name: str
+    amount: float
+
+
 class MonthlySummary(BaseModel):
     month: str  # YYYY-MM format
     total_income: float
     total_expense: float
     savings: float
-    top_categories: List[tuple]
+    investments: float
+    top_categories: List[CategoryExpense]
 
 
 class YearlySummary(BaseModel):
@@ -102,6 +108,34 @@ class SavingsComparison(BaseModel):
     cash_savings: float  # Account balance minus total invested
     difference: float  # Account balance vs total invested comparison
 
+
+class SalaryBase(BaseModel):
+    name: str
+    amount: float
+    start_date: Optional[date] = None
+    is_active: bool = True
+    description: Optional[str] = None
+
+
+class SalaryCreate(SalaryBase):
+    pass
+
+
+class SalaryUpdate(BaseModel):
+    name: Optional[str] = None
+    amount: Optional[float] = None
+    is_active: Optional[bool] = None
+    description: Optional[str] = None
+
+
+class Salary(SalaryBase):
+    id: int
+    last_added_date: Optional[date] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class Analytics(BaseModel):

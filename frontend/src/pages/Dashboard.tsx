@@ -32,7 +32,7 @@ export const Dashboard = () => {
       <h1 className="text-4xl font-bold text-black">Dashboard</h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg shadow-md">
           <p className="text-sm opacity-90">Total Income</p>
           <p className="text-3xl font-bold">₹{summary.total_income.toLocaleString()}</p>
@@ -43,7 +43,12 @@ export const Dashboard = () => {
           <p className="text-3xl font-bold">₹{summary.total_expense.toLocaleString()}</p>
         </div>
         
-        <div className={`bg-gradient-to-br ${summary.savings >= 0 ? 'from-blue-500 to-blue-600' : 'from-orange-500 to-orange-600'} text-white p-6 rounded-lg shadow-md`}>
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-lg shadow-md">
+          <p className="text-sm opacity-90">Investments</p>
+          <p className="text-3xl font-bold">₹{(summary.investments || 0).toLocaleString()}</p>
+        </div>
+        
+        <div className={`bg-gradient-to-br ${summary.savings >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} text-white p-6 rounded-lg shadow-md`}>
           <p className="text-sm opacity-90">Savings</p>
           <p className="text-3xl font-bold">₹{summary.savings.toLocaleString()}</p>
         </div>
@@ -52,7 +57,7 @@ export const Dashboard = () => {
           <p className="text-sm opacity-90">Savings Rate</p>
           <p className="text-3xl font-bold">
             {summary.total_income > 0 
-              ? ((summary.savings / summary.total_income) * 100).toFixed(1)
+              ? (summary.savings / summary.total_income * 100).toFixed(1)
               : 0}%
           </p>
         </div>

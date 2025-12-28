@@ -67,3 +67,17 @@ class SavingsInvestment(Base):
     last_recurring_date = Column(Date, nullable=True)  # Last time recurring amount was added
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class Salary(Base):
+    __tablename__ = "salaries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)  # e.g., "Primary Salary", "Bonus Salary"
+    amount = Column(Float, nullable=False)  # Monthly salary amount
+    start_date = Column(Date, nullable=False)  # Date when salary was initialized
+    is_active = Column(Integer, default=1, nullable=False)  # 0=inactive, 1=active
+    last_added_date = Column(Date, nullable=True)  # Last date salary was auto-added
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

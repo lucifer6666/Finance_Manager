@@ -195,3 +195,85 @@ def process_recurring_investments(db: Session) -> int:
     
     return processed_count
 
+
+# Salary CRUD operations
+def create_salary(db: Session, salary: schemas.SalaryCreate) -> models.Salary:
+    """Create a new salary entry"""
+    db_salary = models.Salary(**salary.dict())
+    db.add(db_salary)
+    db.commit()
+    db.refresh(db_salary)
+    return db_salary
+
+
+def get_salary(db: Session, salary_id: int) -> Optional[models.Salary]:
+    """Get a salary by ID"""
+    return db.query(models.Salary).filter(models.Salary.id == salary_id).first()
+
+
+def get_all_salaries(db: Session) -> List[models.Salary]:
+    """Get all salaries"""
+    return db.query(models.Salary).all()
+
+
+def get_active_salaries(db: Session) -> List[models.Salary]:
+    """Get all active salaries"""
+    return db.query(models.Salary).filter(models.Salary.is_active == 1).all()
+
+
+def update_salary(db: Session, salary_id: int, salary_update: schemas.SalaryUpdate) -> Optional[models.Salary]:
+    """Update a salary"""
+    db_salary = db.query(models.Salary).filter(models.Salary.id == salary_id).first()
+    if db_salary:
+        update_data = salary_update.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_salary, field, value)
+        db_salary.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_salary)
+    return db_salary
+
+
+def delete_salary(db: Session, salary_id: int) -> bool:
+    """Delete a salary"""
+    db_salary = db.query(models.Salary).filter(models.Salary.id == salary_id).first()
+    if db_salary:
+        db.delete(db_salary)
+        db.commit()
+        return True
+    return False
+
+
+def process_monthly_salaries(db: Session) -> int:
+    """Process monthly salary auto-entries on the 1st of each month"""
+    today = date.today()
+    
+    # Only process on the 1st of the month
+    if today.day != 1:
+        return 0
+    
+    processed_count = 0
+    active_salaries = get_active_salaries(db)
+    
+    for salary in active_salaries:
+        # Check if salary was already added today
+        if salary.last_added_date != today:
+            # Create an income transaction for the salary
+            transaction = models.Transaction(
+                date=today,
+                amount=salary.amount,
+                type="income",
+                category="Salary",
+                description=f"Monthly salary: {salary.name}",
+                payment_method="bank",
+                created_at=datetime.utcnow()
+            )
+            db.add(transaction)
+            salary.last_added_date = today
+            processed_count += 1
+    
+    if processed_count > 0:
+        db.commit()
+    
+    return processed_count
+
