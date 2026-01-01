@@ -104,6 +104,7 @@ logs/
 .cache/
 .pytest_cache/
 .eslintcache
+*_local.txt
 
 # IDE specific
 .vscode/settings.json
