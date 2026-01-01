@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from .. import crud, schemas
 from ..database import get_db
+from ..utils.auto_increment import process_auto_salary_entries
 
 router = APIRouter()
 
@@ -70,3 +71,14 @@ def process_monthly_salaries(db: Session = Depends(get_db)):
     """Process monthly salary auto-entries (called on 1st of month)"""
     processed_count = crud.process_monthly_salaries(db)
     return {"message": f"Processed {processed_count} salary entries"}
+
+
+@router.post("/startup/check")
+def startup_check_salaries(db: Session = Depends(get_db)):
+    """
+    Manually trigger salary auto-entry checks.
+    This is automatically called on app startup.
+    Useful for manual triggers if needed.
+    """
+    result = process_auto_salary_entries(db)
+    return result

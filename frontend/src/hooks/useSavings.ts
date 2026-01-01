@@ -45,9 +45,14 @@ export const useSavings = () => {
     }
   };
 
-  const updateInvestment = async (id: number, investment: Omit<SavingsInvestment, 'id' | 'created_at' | 'updated_at'>) => {
+  const updateInvestment = async (id: number, investment: Partial<SavingsInvestment>) => {
     try {
-      const response = await savingsApi.update(id, investment);
+      // Get the existing investment to merge with updates
+      const existing = investments.find(i => i.id === id);
+      if (!existing) throw new Error('Investment not found');
+      
+      const mergedInvestment = { ...existing, ...investment };
+      const response = await savingsApi.update(id, mergedInvestment as Omit<SavingsInvestment, 'id' | 'created_at' | 'updated_at'>);
       setInvestments(investments.map(i => i.id === id ? response.data : i));
       // Refresh comparison
       const comparisonRes = await savingsApi.getComparison();

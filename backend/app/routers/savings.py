@@ -4,6 +4,7 @@ from typing import List
 from .. import crud, schemas
 from ..database import get_db
 from ..utils.analytics import calculate_savings_comparison
+from ..utils.auto_increment import process_auto_recurring_investments
 
 router = APIRouter()
 
@@ -71,3 +72,13 @@ def process_recurring_investments(db: Session = Depends(get_db)):
     """Process all recurring investments. Should be called daily."""
     processed_count = crud.process_recurring_investments(db)
     return {"message": f"Processed {processed_count} recurring investments"}
+
+@router.post("/startup/check")
+def startup_check_investments(db: Session = Depends(get_db)):
+    """
+    Manually trigger recurring investment auto-entry checks.
+    This is automatically called on app startup.
+    Useful for manual triggers if needed.
+    """
+    result = process_auto_recurring_investments(db)
+    return result

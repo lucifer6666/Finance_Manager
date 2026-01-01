@@ -4,6 +4,7 @@ import { SavingsInvestment } from '../types';
 interface SavingsInvestmentTableProps {
   investments: SavingsInvestment[];
   onDelete?: (id: number) => Promise<void>;
+  onUpdate?: (id: number, investment: Partial<SavingsInvestment>) => Promise<void>;
   loading?: boolean;
 }
 
@@ -16,7 +17,18 @@ const investmentTypeColors: Record<string, string> = {
   other: 'bg-gray-100 text-gray-800',
 };
 
-export const SavingsInvestmentTable = ({ investments, onDelete, loading = false }: SavingsInvestmentTableProps) => {
+const recurringColors: Record<string, string> = {
+  monthly: 'bg-cyan-100 text-cyan-800',
+  yearly: 'bg-indigo-100 text-indigo-800',
+  none: 'bg-gray-100 text-gray-600',
+};
+
+export const SavingsInvestmentTable = ({ investments, onDelete, onUpdate, loading = false }: SavingsInvestmentTableProps) => {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editRecurring, setEditRecurring] = useState<{ is_recurring: boolean; recurring_type?: string }>({
+    is_recurring: false,
+  });
+
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this investment?')) {
       try {
@@ -24,6 +36,26 @@ export const SavingsInvestmentTable = ({ investments, onDelete, loading = false 
       } catch (error) {
         console.error('Failed to delete investment:', error);
       }
+    }
+  };
+
+  const handleEditClick = (investment: SavingsInvestment) => {
+    setEditingId(investment.id);
+    setEditRecurring({
+      is_recurring: investment.is_recurring,
+      recurring_type: investment.recurring_type || undefined,
+    });
+  };
+
+  const handleSaveRecurring = async (id: number) => {
+    try {
+      await onUpdate?.(id, {
+        is_recurring: editRecurring.is_recurring ? 1 : 0,
+        recurring_type: editRecurring.is_recurring ? editRecurring.recurring_type : null,
+      });
+      setEditingId(null);
+    } catch (error) {
+      console.error('Failed to update investment:', error);
     }
   };
 
@@ -68,6 +100,7 @@ export const SavingsInvestmentTable = ({ investments, onDelete, loading = false 
               <th className="px-6 py-3 text-right text-sm font-semibold text-black">Initial</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-black">Current Value</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-black">Profit/Loss</th>
+              <th className="px-6 py-3 text-center text-sm font-semibold text-black">Recurring</th>
               <th className="px-6 py-3 text-center text-sm font-semibold text-black">Actions</th>
             </tr>
           </thead>
@@ -75,7 +108,14 @@ export const SavingsInvestmentTable = ({ investments, onDelete, loading = false 
             {investments.map(investment => {
               const profitLoss = investment.current_value - investment.initial_amount;
               const profitLossPercent = (profitLoss / investment.initial_amount) * 100;
-              
+              const isEditing = editingId === investment.id;
+
+              const recurringLabel = investment.is_recurring
+                ? investment.recurring_type
+                  ? investment.recurring_type.charAt(0).toUpperCase() + investment.recurring_type.slice(1)
+                  : 'Active'
+                : 'None';
+
               return (
                 <tr key={investment.id} className="border-b hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-black">{investment.name}</td>
@@ -91,13 +131,79 @@ export const SavingsInvestmentTable = ({ investments, onDelete, loading = false 
                     {profitLoss >= 0 ? '+' : ''}₹{profitLoss.toLocaleString('en-IN', { maximumFractionDigits: 2 })} ({profitLossPercent.toFixed(2)}%)
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleDelete(investment.id)}
-                      disabled={loading}
-                      className="text-red-600 hover:text-red-800 disabled:text-gray-400"
-                    >
-                      Delete
-                    </button>
+                    {isEditing ? (
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editRecurring.is_recurring}
+                            onChange={(e) =>
+                              setEditRecurring({
+                                ...editRecurring,
+                                is_recurring: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-black">Recurring</span>
+                        </label>
+                        {editRecurring.is_recurring && (
+                          <select
+                            value={editRecurring.recurring_type || ''}
+                            onChange={(e) =>
+                              setEditRecurring({
+                                ...editRecurring,
+                                recurring_type: e.target.value,
+                              })
+                            }
+                            className="text-xs px-2 py-1 border border-gray-300 rounded bg-white text-black"
+                          >
+                            <option value="">Select Type</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                          </select>
+                        )}
+                      </div>
+                    ) : (
+                      <span
+                        className={`px-3 py-1 rounded text-xs font-semibold cursor-pointer hover:opacity-80 ${
+                          recurringColors[investment.is_recurring ? investment.recurring_type || 'none' : 'none']
+                        }`}
+                        onClick={() => handleEditClick(investment)}
+                      >
+                        {recurringLabel}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex gap-2 justify-center">
+                      {isEditing ? (
+                        <>
+                          <button
+                            onClick={() => handleSaveRecurring(investment.id)}
+                            disabled={loading}
+                            className="text-green-600 hover:text-green-800 disabled:text-gray-400 text-sm font-semibold"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            disabled={loading}
+                            className="text-gray-600 hover:text-gray-800 disabled:text-gray-400 text-sm font-semibold"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleDelete(investment.id)}
+                          disabled={loading}
+                          className="text-red-600 hover:text-red-800 disabled:text-gray-400"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

@@ -16,15 +16,24 @@ def calculate_monthly_summary(transactions: List[models.Transaction], db: Sessio
         all_investments = db.query(models.SavingsInvestment).all()
         
         for inv in all_investments:
-            # Only count recurring investments as monthly equivalents
+            # Only count investments that are relevant to this month/year
             if inv.is_recurring:
-                # For yearly recurring investments, divide by 12 to get monthly equivalent
-                if inv.recurring_type == "yearly":
-                    monthly_equivalent = inv.recurring_amount / 12 if inv.recurring_amount else 0
-                    investments_total += monthly_equivalent
-                # For monthly recurring investments, add full recurring amount
-                elif inv.recurring_type == "monthly":
-                    investments_total += inv.recurring_amount if inv.recurring_amount else 0
+                # For monthly recurring investments, check if investment started before or during this month
+                if inv.recurring_type == "monthly":
+                    # Only count if investment was started before or during this month
+                    if inv.purchase_date.year < year or (inv.purchase_date.year == year and inv.purchase_date.month <= month):
+                        investments_total += inv.recurring_amount if inv.recurring_amount else 0
+                # For yearly recurring investments, check if it recurs in this year
+                elif inv.recurring_type == "yearly":
+                    # Check if the last_recurring_date or purchase_date falls in the target year
+                    last_date = inv.last_recurring_date or inv.purchase_date
+                    if last_date.year == year or (inv.purchase_date.year == year and last_date.year < year):
+                        # Calculate how many times this yearly investment occurs in the target month
+                        months_since_purchase = (year - inv.purchase_date.year) * 12 + (month - inv.purchase_date.month)
+                        if months_since_purchase >= 0:
+                            # For yearly recurring, only count once per year (as monthly equivalent)
+                            if last_date.year < year or (last_date.year == year and last_date.month <= month):
+                                investments_total += (inv.recurring_amount / 12) if inv.recurring_amount else 0
             # For non-recurring investments, only count in the month they were purchased
             elif inv.purchase_date.year == year and inv.purchase_date.month == month:
                 investments_total += inv.initial_amount
@@ -160,6 +169,25 @@ def get_spending_trends(db: Session, months: int = 6) -> List[Dict]:
         
         trends.append({
             "month": f"{target_date.year}-{target_date.month:02d}",
+            "income": summary["total_income"],
+            "expense": summary["total_expense"],
+            "investments": summary["investments"],
+            "savings": summary["savings"]
+        })
+    
+    return trends
+
+
+def get_spending_trends_by_year(db: Session, year: int) -> List[Dict]:
+    """Get spending trends for all 12 months of a specific year"""
+    trends = []
+    
+    for month in range(1, 13):
+        transactions = crud.get_transactions_by_month(db, year, month)
+        summary = calculate_monthly_summary(transactions, db, year, month)
+        
+        trends.append({
+            "month": f"{year}-{month:02d}",
             "income": summary["total_income"],
             "expense": summary["total_expense"],
             "investments": summary["investments"],

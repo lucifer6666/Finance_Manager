@@ -17,7 +17,7 @@ export const AnalyticsPage = () => {
     const fetchTrends = async () => {
       setLoading(true);
       try {
-        const response = await analyticsApi.getSpendingTrends(12);
+        const response = await analyticsApi.getSpendingTrends(12, year);
         setSpendingTrends(response.data);
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
@@ -28,7 +28,7 @@ export const AnalyticsPage = () => {
     if (viewMode === 'trends') {
       fetchTrends();
     }
-  }, [viewMode]);
+  }, [viewMode, year]);
 
   // Fetch monthly data
   useEffect(() => {

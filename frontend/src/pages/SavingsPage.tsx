@@ -2,7 +2,7 @@ import { useSavings } from '../hooks';
 import { AddSavingsForm, SavingsInvestmentTable, SavingsComparisonCard } from '../components';
 
 export const SavingsPage = () => {
-  const { investments, comparison, loading, error, addInvestment, deleteInvestment } = useSavings();
+  const { investments, comparison, loading, error, addInvestment, updateInvestment, deleteInvestment } = useSavings();
 
   if (loading) {
     return (
@@ -35,7 +35,12 @@ export const SavingsPage = () => {
       <AddSavingsForm onAdd={addInvestment} />
 
       {/* Investments Table */}
-      <SavingsInvestmentTable investments={investments} onDelete={deleteInvestment} />
+      <SavingsInvestmentTable 
+        investments={investments} 
+        onDelete={deleteInvestment}
+        onUpdate={updateInvestment}
+        loading={loading}
+      />
     </div>
   );
 };

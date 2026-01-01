@@ -8,7 +8,8 @@ from ..utils.analytics import (
     calculate_monthly_summary,
     generate_insights,
     get_yearly_summary,
-    get_spending_trends
+    get_spending_trends,
+    get_spending_trends_by_year
 )
 
 router = APIRouter()
@@ -83,11 +84,17 @@ def get_insights(
 
 @router.get("/trends/spending", response_model=List[dict])
 def get_spending_trends_endpoint(
+    year: int = Query(None),
     months: int = Query(6, ge=1, le=24),
     db: Session = Depends(get_db)
 ):
-    """Get spending trends for the last N months"""
-    trends = get_spending_trends(db, months)
+    """Get spending trends for a specific year or the last N months"""
+    if year:
+        # Get full year data if year is specified
+        trends = get_spending_trends_by_year(db, year)
+    else:
+        # Get last N months if year is not specified
+        trends = get_spending_trends(db, months)
     return trends
 
 

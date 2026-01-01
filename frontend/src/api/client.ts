@@ -99,8 +99,8 @@ export const analyticsApi = {
   getInsights: (year: number, month: number) =>
     axiosInstance.get<Insight[]>(`/analytics/insights/${year}/${month}`),
   
-  getSpendingTrends: (months: number = 6) =>
-    axiosInstance.get(`/analytics/trends/spending`, { params: { months } }),
+  getSpendingTrends: (months: number = 6, year?: number) =>
+    axiosInstance.get(`/analytics/trends/spending`, { params: { months, ...(year && { year }) } }),
   
   getCurrentSummary: () =>
     axiosInstance.get<Analytics>('/analytics/summary/current'),
