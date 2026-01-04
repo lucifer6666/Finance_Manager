@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAnalytics, useTransactions } from '../hooks';
+import { useAnalytics, useTransactions, useCreditCards } from '../hooks';
 import { AddTransactionForm, InsightPanel, CategoryPieChart, MonthlyChart } from '../components';
 import { analyticsApi } from '../api/client';
 
@@ -7,6 +7,7 @@ export const Dashboard = () => {
   const now = new Date();
   const { _, addTransaction } = useTransactions(now.getFullYear(), now.getMonth() + 1);
   const { analytics } = useAnalytics(now.getFullYear(), now.getMonth() + 1);
+  const { cards } = useCreditCards();
   const [spendingTrends, setSpendingTrends] = useState<any[]>([]);
 
   useEffect(() => {
@@ -64,9 +65,9 @@ export const Dashboard = () => {
       </div>
 
       {/* Insights */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      {/* <div className="bg-white p-6 rounded-lg shadow-md">
         <InsightPanel insights={analytics.insights} />
-      </div>
+      </div> */}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -75,7 +76,7 @@ export const Dashboard = () => {
       </div>
 
       {/* Add Transaction Form */}
-      <AddTransactionForm onAdd={addTransaction} />
+      <AddTransactionForm cards={cards} onAdd={addTransaction} />
     </div>
   );
 };

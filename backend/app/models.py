@@ -28,10 +28,12 @@ class Transaction(Base):
     description = Column(String, nullable=True)
     payment_method = Column(String, nullable=False)  # "cash", "card", "upi", "bank"
     credit_card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=True)
+    is_payment = Column(Integer, default=0, nullable=False)  # 0=regular transaction, 1=credit card payment
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relationship
+    # Relationships
     credit_card = relationship("CreditCard", back_populates="transactions")
+    payment_record = relationship("CreditCardPayment", back_populates="transaction", uselist=False)
 
 
 class CreditCard(Base):
@@ -46,8 +48,26 @@ class CreditCard(Base):
     credit_limit = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relationship
+    # Relationships
     transactions = relationship("Transaction", back_populates="credit_card")
+    payments = relationship("CreditCardPayment", back_populates="credit_card")
+
+
+class CreditCardPayment(Base):
+    __tablename__ = "credit_card_payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    credit_card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=False)
+    payment_date = Column(Date, nullable=False)
+    amount = Column(Float, nullable=False)
+    payment_method = Column(String, nullable=False)  # "cash", "upi", "bank", "cheque"
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)  # Related transaction if created from transaction
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    credit_card = relationship("CreditCard", back_populates="payments")
+    transaction = relationship("Transaction", back_populates="payment_record")
 
 
 class SavingsInvestment(Base):

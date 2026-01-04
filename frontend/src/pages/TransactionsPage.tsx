@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTransactions } from '../hooks';
+import { useTransactions, useCreditCards } from '../hooks';
 import { AddTransactionForm, TransactionTable } from '../components';
 
 export const TransactionsPage = () => {
@@ -7,6 +7,7 @@ export const TransactionsPage = () => {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const { transactions, addTransaction, deleteTransaction } = useTransactions(year, month);
+  const { cards } = useCreditCards();
 
   const handlePrevMonth = () => {
     if (month === 1) {
@@ -27,6 +28,10 @@ export const TransactionsPage = () => {
   };
 
   const monthName = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const handleAddTransaction = async (transaction: any): Promise<void> => {
+    await addTransaction(transaction);
+  };
 
   return (
     <div className="space-y-6">
@@ -52,9 +57,9 @@ export const TransactionsPage = () => {
         </div>
       </div>
 
-      <AddTransactionForm onAdd={addTransaction} />
+      <AddTransactionForm cards={cards} onAdd={handleAddTransaction} />
 
-      <TransactionTable transactions={transactions} onDelete={deleteTransaction} />
+      <TransactionTable transactions={transactions} cards={cards} onDelete={deleteTransaction} />
     </div>
   );
 };

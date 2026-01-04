@@ -277,3 +277,58 @@ def process_monthly_salaries(db: Session) -> int:
     
     return processed_count
 
+
+# Credit Card Payment CRUD operations
+def create_credit_card_payment(db: Session, payment: schemas.CreditCardPaymentCreate) -> models.CreditCardPayment:
+    """Create a new credit card payment"""
+    db_payment = models.CreditCardPayment(**payment.dict())
+    db.add(db_payment)
+    db.commit()
+    db.refresh(db_payment)
+    return db_payment
+
+
+def get_credit_card_payment(db: Session, payment_id: int) -> Optional[models.CreditCardPayment]:
+    """Get a credit card payment by ID"""
+    return db.query(models.CreditCardPayment).filter(models.CreditCardPayment.id == payment_id).first()
+
+
+def get_all_credit_card_payments(db: Session, skip: int = 0, limit: int = 100) -> List[models.CreditCardPayment]:
+    """Get all credit card payments with pagination"""
+    return db.query(models.CreditCardPayment).offset(skip).limit(limit).all()
+
+
+def get_payments_by_card(db: Session, card_id: int, skip: int = 0, limit: int = 100) -> List[models.CreditCardPayment]:
+    """Get all payments for a specific credit card"""
+    return db.query(models.CreditCardPayment).filter(
+        models.CreditCardPayment.credit_card_id == card_id
+    ).offset(skip).limit(limit).all()
+
+
+def get_payments_by_date_range(db: Session, start_date: date, end_date: date) -> List[models.CreditCardPayment]:
+    """Get credit card payments within a date range"""
+    return db.query(models.CreditCardPayment).filter(
+        models.CreditCardPayment.payment_date >= start_date,
+        models.CreditCardPayment.payment_date <= end_date
+    ).all()
+
+
+def update_credit_card_payment(db: Session, payment_id: int, payment_update: schemas.CreditCardPaymentCreate) -> Optional[models.CreditCardPayment]:
+    """Update a credit card payment"""
+    db_payment = get_credit_card_payment(db, payment_id)
+    if db_payment:
+        for key, value in payment_update.dict().items():
+            setattr(db_payment, key, value)
+        db.commit()
+        db.refresh(db_payment)
+    return db_payment
+
+
+def delete_credit_card_payment(db: Session, payment_id: int) -> bool:
+    """Delete a credit card payment"""
+    db_payment = get_credit_card_payment(db, payment_id)
+    if db_payment:
+        db.delete(db_payment)
+        db.commit()
+        return True
+    return False

@@ -8,6 +8,7 @@ from sqlalchemy import inspect, Column, String, Float, Date, Integer, text
 from datetime import date
 
 db_file = "./finance.db"
+DUPLICATE_COLUMN_ERROR = "duplicate column"
 
 # Import database components
 from app.database import Base, engine, SessionLocal
@@ -55,7 +56,7 @@ if db_exists:
             except Exception as e:
                 print(f"✗ Error adding columns: {e}")
                 # If columns already exist, that's okay
-                if "duplicate column" in str(e).lower():
+                if DUPLICATE_COLUMN_ERROR in str(e).lower():
                     print("  (Columns already exist - continuing)")
                 else:
                     sys.exit(1)
@@ -79,7 +80,7 @@ if db_exists:
                 print("✓ salaries table updated successfully")
             except Exception as e:
                 print(f"✗ Error adding column: {e}")
-                if "duplicate column" in str(e).lower():
+                if DUPLICATE_COLUMN_ERROR in str(e).lower():
                     print("  (Column already exists - continuing)")
                 else:
                     sys.exit(1)
@@ -88,8 +89,61 @@ if db_exists:
         else:
             print("  ✓ start_date column already exists in salaries")
     else:
-        print("  • savings_investments table not found, creating new schema...")
+        print("  • salaries table not found, creating new schema...")
         Base.metadata.create_all(bind=engine)
+    
+    # Check transactions table for is_payment column
+    if 'transactions' in existing_tables:
+        existing_columns = [col['name'] for col in inspector.get_columns('transactions')]
+        
+        if 'is_payment' not in existing_columns:
+            print("  • Found missing column in transactions: is_payment")
+            session = SessionLocal()
+            try:
+                with engine.begin() as connection:
+                    connection.execute(text('ALTER TABLE transactions ADD COLUMN is_payment INTEGER DEFAULT 0'))
+                    print("    ✓ Added column: is_payment")
+                print("✓ transactions table updated successfully")
+            except Exception as e:
+                print(f"✗ Error adding column: {e}")
+                if DUPLICATE_COLUMN_ERROR in str(e).lower():
+                    print("  (Column already exists - continuing)")
+                else:
+                    sys.exit(1)
+            finally:
+                session.close()
+        else:
+            print("  ✓ is_payment column already exists in transactions")
+    
+    # Check if credit_card_payments table exists
+    if 'credit_card_payments' not in existing_tables:
+        print("  • credit_card_payments table not found, creating...")
+        try:
+            with engine.begin() as connection:
+                connection.execute(text('''
+                    CREATE TABLE credit_card_payments (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        credit_card_id INTEGER NOT NULL,
+                        payment_date DATE NOT NULL,
+                        amount FLOAT NOT NULL,
+                        payment_method VARCHAR NOT NULL,
+                        transaction_id INTEGER,
+                        description VARCHAR,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(credit_card_id) REFERENCES credit_cards(id),
+                        FOREIGN KEY(transaction_id) REFERENCES transactions(id)
+                    )
+                '''))
+                print("    ✓ Created table: credit_card_payments")
+            print("✓ credit_card_payments table created successfully")
+        except Exception as e:
+            print(f"✗ Error creating credit_card_payments table: {e}")
+            if "already exists" in str(e).lower():
+                print("  (Table already exists - continuing)")
+            else:
+                sys.exit(1)
+    else:
+        print("  ✓ credit_card_payments table already exists")
 else:
     print(f"✓ Creating new database: {db_file}")
     # Create all tables with fresh schema
@@ -98,10 +152,19 @@ else:
 print("\n✓ Database initialization complete!")
 print("\nSchema includes:")
 print("  Tables:")
-print("  - transactions")
+print("  - transactions (with credit card payment tracking)")
 print("  - credit_cards")
+print("  - credit_card_payments (bill payment records)")
 print("  - savings_investments (with recurring investment support)")
 print("  - salaries (with auto-entry tracking and start date)")
+print("\nTransaction Fields:")
+print("  • Basic: id, date, amount, type, category, payment_method")
+print("  • Credit Card: credit_card_id, is_payment (for bill payments)")
+print("  • Metadata: description, created_at")
+print("\nCredit Card Payment Fields:")
+print("  • Tracking: id, credit_card_id, payment_date, amount, payment_method")
+print("  • Linking: transaction_id (optional reference to transaction)")
+print("  • Metadata: description, created_at")
 print("\nSavings Investment Fields:")
 print("  • Basic: id, name, investment_type, purchase_date")
 print("  • Values: initial_amount, current_value")

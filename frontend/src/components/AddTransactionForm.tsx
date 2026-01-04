@@ -1,33 +1,41 @@
 import { useState } from 'react';
-import { Transaction } from '../types';
+import { Transaction, CreditCard } from '../types';
 
 interface AddTransactionFormProps {
+  cards?: CreditCard[];
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
   loading?: boolean;
 }
 
-export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFormProps) => {
+export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTransactionFormProps) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    amount: '',
+    amount: '' as string | number,
     type: 'expense' as 'income' | 'expense',
     category: '',
     description: '',
-    payment_method: 'cash' as 'cash' | 'card' | 'upi' | 'bank',
-    credit_card_id: undefined,
+    payment_method: 'upi' as 'cash' | 'card' | 'upi' | 'bank',
+    credit_card_id: undefined as undefined | number,
+    is_payment: false,
   });
 
   const categories = {
-    expense: ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Healthcare', 'Other'],
+    expense: ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Healthcare', 'Groceries', 'Blinkit', 'Zomato', 'Other'],
     income: ['Salary', 'Freelance', 'Bonus', 'Investment', 'Other'],
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'amount' ? parseFloat(value) || '' : value,
-    }));
+    const { name, value, type: inputType } = e.target;
+    setFormData(prev => {
+      if (inputType === 'checkbox') {
+        return { ...prev, [name]: (e.target as HTMLInputElement).checked };
+      }
+      if (name === 'amount') {
+        const numValue = value === '' ? '' : Number.parseFloat(value);
+        return { ...prev, [name]: numValue };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +45,7 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         ...formData,
         amount: formData.amount as unknown as number,
         credit_card_id: formData.payment_method === 'card' ? formData.credit_card_id : undefined,
+        is_payment: formData.is_payment,
       });
       setFormData({
         date: new Date().toISOString().split('T')[0],
@@ -46,6 +55,7 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         description: '',
         payment_method: 'cash',
         credit_card_id: undefined,
+        is_payment: false,
       });
     } catch (error) {
       console.error('Failed to add transaction:', error);
@@ -58,8 +68,9 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-sm font-bold text-black mb-1">Date</label>
+          <label htmlFor="date" className="block text-sm font-bold text-black mb-1">Date</label>
           <input
+            id="date"
             type="date"
             name="date"
             value={formData.date}
@@ -70,8 +81,9 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-black mb-1">Amount</label>
+          <label htmlFor="amount" className="block text-sm font-bold text-black mb-1">Amount</label>
           <input
+            id="amount"
             type="number"
             name="amount"
             value={formData.amount}
@@ -84,8 +96,9 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-black mb-1">Type</label>
+          <label htmlFor="type" className="block text-sm font-bold text-black mb-1">Type</label>
           <select
+            id="type"
             name="type"
             value={formData.type}
             onChange={handleChange}
@@ -97,8 +110,9 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-black mb-1">Category</label>
+          <label htmlFor="category" className="block text-sm font-bold text-black mb-1">Category</label>
           <select
+            id="category"
             name="category"
             value={formData.category}
             onChange={handleChange}
@@ -113,8 +127,9 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-black mb-1">Payment Method</label>
+          <label htmlFor="payment_method" className="block text-sm font-bold text-black mb-1">Payment Method</label>
           <select
+            id="payment_method"
             name="payment_method"
             value={formData.payment_method}
             onChange={handleChange}
@@ -128,8 +143,9 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-black mb-1">Description</label>
+          <label htmlFor="description" className="block text-sm font-bold text-black mb-1">Description</label>
           <input
+            id="description"
             type="text"
             name="description"
             value={formData.description}
@@ -140,10 +156,47 @@ export const AddTransactionForm = ({ onAdd, loading = false }: AddTransactionFor
         </div>
       </div>
 
+      {formData.payment_method === 'card' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label htmlFor="credit_card_id" className="block text-sm font-bold text-black mb-1">Select Credit Card</label>
+            <select
+              id="credit_card_id"
+              name="credit_card_id"
+              value={formData.credit_card_id ?? ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded-md text-white bg-gray-700"
+              required={formData.payment_method === 'card'}
+            >
+              <option value="">Select a card</option>
+              {cards.map(card => (
+                <option key={card.id} value={card.id}>
+                  {card.name} - {card.bank_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-end">
+            <label htmlFor="is_payment" className="flex items-center text-black mb-2">
+              <input
+                id="is_payment"
+                type="checkbox"
+                name="is_payment"
+                checked={formData.is_payment}
+                onChange={handleChange}
+                className="w-4 h-4 mr-2"
+              />
+              <span className="text-sm font-bold">Mark as Card Payment</span>
+            </label>
+          </div>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400"
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
       >
         {loading ? 'Adding...' : 'Add Transaction'}
       </button>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useCreditCards } from '../hooks';
-import { CreditCardSummary } from '../components';
+import { useState, useEffect } from 'react';
+import { useCreditCards, usePayments } from '../hooks';
+import { CreditCardSummary, AddPaymentForm } from '../components';
 
 interface CreditCardForm {
   name: string;
@@ -12,8 +12,12 @@ interface CreditCardForm {
 }
 
 export const CreditCardsPage = () => {
-  const { cards, addCard, updateCard, deleteCard } = useCreditCards();
+  const { cards, addCard, deleteCard } = useCreditCards();
+  const { payments, fetchPayments, addPayment, deletePayment } = usePayments();
   const [showForm, setShowForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
   const [formData, setFormData] = useState<CreditCardForm>({
     name: '',
     bank_name: '',
@@ -22,6 +26,11 @@ export const CreditCardsPage = () => {
     due_date: '5',
     credit_limit: '',
   });
+
+  // Fetch payments when component mounts
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -37,10 +46,10 @@ export const CreditCardsPage = () => {
       await addCard({
         name: formData.name,
         bank_name: formData.bank_name,
-        billing_cycle_start: parseInt(formData.billing_cycle_start),
-        billing_cycle_end: parseInt(formData.billing_cycle_end),
-        due_date: parseInt(formData.due_date),
-        credit_limit: parseFloat(formData.credit_limit),
+        billing_cycle_start: Number.parseInt(formData.billing_cycle_start),
+        billing_cycle_end: Number.parseInt(formData.billing_cycle_end),
+        due_date: Number.parseInt(formData.due_date),
+        credit_limit: Number.parseFloat(formData.credit_limit),
       });
       setFormData({
         name: '',
@@ -57,7 +66,7 @@ export const CreditCardsPage = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this credit card?')) {
+    if (globalThis.confirm('Are you sure you want to delete this credit card?')) {
       try {
         await deleteCard(id);
       } catch (error) {
@@ -65,6 +74,26 @@ export const CreditCardsPage = () => {
       }
     }
   };
+
+  const handleAddPayment = async (paymentData: any) => {
+    try {
+      await addPayment(paymentData);
+      setShowPaymentForm(false);
+      // Refresh payments after adding
+      await fetchPayments();
+    } catch (error) {
+      console.error('Failed to add payment:', error);
+    }
+  };
+
+  // Filter payments by selected month and year
+  const filteredPayments = payments.filter(payment => {
+    const paymentDate = new Date(payment.payment_date);
+    return (
+      paymentDate.getMonth() + 1 === filterMonth &&
+      paymentDate.getFullYear() === filterYear
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -84,8 +113,9 @@ export const CreditCardsPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-black mb-1">Card Name</label>
+              <label htmlFor="name" className="block text-sm font-bold text-black mb-1">Card Name</label>
               <input
+                id="name"
                 type="text"
                 name="name"
                 value={formData.name}
@@ -97,8 +127,9 @@ export const CreditCardsPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-black mb-1">Bank Name</label>
+              <label htmlFor="bank_name" className="block text-sm font-bold text-black mb-1">Bank Name</label>
               <input
+                id="bank_name"
                 type="text"
                 name="bank_name"
                 value={formData.bank_name}
@@ -110,8 +141,9 @@ export const CreditCardsPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-black mb-1">Billing Cycle Start (Day)</label>
+              <label htmlFor="billing_cycle_start" className="block text-sm font-bold text-black mb-1">Billing Cycle Start (Day)</label>
               <input
+                id="billing_cycle_start"
                 type="number"
                 name="billing_cycle_start"
                 value={formData.billing_cycle_start}
@@ -124,8 +156,9 @@ export const CreditCardsPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-black mb-1">Billing Cycle End (Day)</label>
+              <label htmlFor="billing_cycle_end" className="block text-sm font-bold text-black mb-1">Billing Cycle End (Day)</label>
               <input
+                id="billing_cycle_end"
                 type="number"
                 name="billing_cycle_end"
                 value={formData.billing_cycle_end}
@@ -138,8 +171,9 @@ export const CreditCardsPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-black mb-1">Due Date (Day)</label>
+              <label htmlFor="due_date" className="block text-sm font-bold text-black mb-1">Due Date (Day)</label>
               <input
+                id="due_date"
                 type="number"
                 name="due_date"
                 value={formData.due_date}
@@ -152,8 +186,9 @@ export const CreditCardsPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-black mb-1">Credit Limit</label>
+              <label htmlFor="credit_limit" className="block text-sm font-bold text-black mb-1">Credit Limit</label>
               <input
+                id="credit_limit"
                 type="number"
                 name="credit_limit"
                 value={formData.credit_limit}
@@ -176,6 +211,117 @@ export const CreditCardsPage = () => {
       )}
 
       <CreditCardSummary cards={cards} />
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-black">Bill Payments</h2>
+        <button
+          onClick={() => setShowPaymentForm(!showPaymentForm)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          {showPaymentForm ? 'Cancel' : '+ Log Payment'}
+        </button>
+      </div>
+
+      {showPaymentForm && cards.length > 0 && (
+        <AddPaymentForm 
+          cards={cards}
+          onAdd={handleAddPayment}
+        />
+      )}
+
+      {/* Month and Year Filter */}
+      {payments.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex gap-4">
+            <div>
+              <label htmlFor="filterMonth" className="block text-sm font-semibold text-black mb-1">Month</label>
+              <select
+                id="filterMonth"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(Number.parseInt(e.target.value))}
+                className="px-3 py-2 border rounded-md bg-white text-black"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                  <option key={month} value={month}>
+                    {new Date(2024, month - 1).toLocaleDateString('en-US', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="filterYear" className="block text-sm font-semibold text-black mb-1">Year</label>
+              <select
+                id="filterYear"
+                value={filterYear}
+                onChange={(e) => setFilterYear(Number.parseInt(e.target.value))}
+                className="px-3 py-2 border rounded-md bg-white text-black"
+              >
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <span className="text-sm text-gray-600">
+                Showing {filteredPayments.length} payment{filteredPayments.length === 1 ? '' : 's'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {filteredPayments.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-100 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Card</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Payment Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Method</th>
+                <th className="px-6 py-3 text-right text-sm font-semibold text-black">Amount</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Description</th>
+                <th className="px-6 py-3 text-center text-sm font-semibold text-black">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.map(payment => {
+                const card = cards.find(c => c.id === payment.credit_card_id);
+                return (
+                  <tr key={payment.id} className="border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium text-black">
+                      {card ? card.name : 'Unknown'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-black">
+                      {new Date(payment.payment_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-black">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                        {payment.payment_method.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-green-600 text-right">
+                      ₹{payment.amount.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-black">
+                      {payment.description || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => deletePayment(payment.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {cards.length > 0 && (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">

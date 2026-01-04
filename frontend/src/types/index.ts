@@ -5,8 +5,20 @@ export interface Transaction {
   type: 'income' | 'expense';
   category: string;
   description?: string;
-  payment_method: 'cash' | 'card' | 'upi' | 'bank';
+  payment_method: 'upi' | 'cash' | 'card' | 'bank';
   credit_card_id?: number;
+  is_payment?: boolean;
+  created_at: string;
+}
+
+export interface CreditCardPayment {
+  id: number;
+  credit_card_id: number;
+  payment_date: string;
+  amount: number;
+  payment_method: 'cash' | 'upi' | 'bank' | 'cheque';
+  transaction_id?: number;
+  description?: string;
   created_at: string;
 }
 
@@ -20,6 +32,7 @@ export interface CreditCard {
   credit_limit: number;
   created_at: string;
   transactions?: Transaction[];
+  payments?: CreditCardPayment[];
 }
 
 export interface SavingsInvestment {

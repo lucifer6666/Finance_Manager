@@ -10,6 +10,8 @@ export const AnalyticsPage = () => {
   const [spendingTrends, setSpendingTrends] = useState<any[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<any>(null);
   const [insights, setInsights] = useState<any[]>([]);
+  const [yearlyCategories, setYearlyCategories] = useState<any>(null);
+  const [includeInvestments, setIncludeInvestments] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Fetch spending trends
@@ -19,6 +21,10 @@ export const AnalyticsPage = () => {
       try {
         const response = await analyticsApi.getSpendingTrends(12, year);
         setSpendingTrends(response.data);
+        
+        // Also fetch yearly categories
+        const categoriesResponse = await analyticsApi.getYearlyCategories(year, includeInvestments);
+        setYearlyCategories(categoriesResponse.data);
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
       } finally {
@@ -28,7 +34,7 @@ export const AnalyticsPage = () => {
     if (viewMode === 'trends') {
       fetchTrends();
     }
-  }, [viewMode, year]);
+  }, [viewMode, year, includeInvestments]);
 
   // Fetch monthly data
   useEffect(() => {
@@ -36,7 +42,7 @@ export const AnalyticsPage = () => {
       setLoading(true);
       try {
         const [summaryResponse, insightsResponse] = await Promise.all([
-          analyticsApi.getMonthly(year, month),
+          analyticsApi.getMonthly(year, month, includeInvestments),
           analyticsApi.getInsights(year, month),
         ]);
         setMonthlySummary(summaryResponse.data);
@@ -50,7 +56,7 @@ export const AnalyticsPage = () => {
     if (viewMode === 'monthly') {
       fetchMonthlyData();
     }
-  }, [year, month, viewMode]);
+  }, [year, month, viewMode, includeInvestments]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -59,16 +65,6 @@ export const AnalyticsPage = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount).replace('₹', '₹');
-  };
-
-  const getInsightClass = (severity: string) => {
-    if (severity === 'alert') {
-      return 'bg-red-50 border-red-600';
-    } else if (severity === 'warning') {
-      return 'bg-yellow-50 border-yellow-600';
-    } else {
-      return 'bg-blue-50 border-blue-600';
-    }
   };
 
   const months = [
@@ -171,6 +167,55 @@ export const AnalyticsPage = () => {
             </div>
           )}
 
+          {/* Yearly Category Distribution */}
+          {yearlyCategories?.top_categories?.length > 0 && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-black">Yearly Expense Categories</h2>
+                <label className="flex items-center gap-2 text-black cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeInvestments}
+                    onChange={(e) => setIncludeInvestments(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm font-semibold">Include Investments</span>
+                </label>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <CategoryPieChart 
+                    data={yearlyCategories.top_categories.map((cat: any) => ({
+                      name: cat.name,
+                      value: cat.amount
+                    }))} 
+                    title="Category Distribution"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4 text-black">Category Breakdown</h3>
+                  <div className="space-y-2">
+                    {yearlyCategories.top_categories.map((category: any) => (
+                      <div key={category.name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        <span className="text-black font-medium">{category.name}</span>
+                        <div className="text-right">
+                          <p className="text-red-600 font-bold">{formatCurrency(category.amount)}</p>
+                          {category.name !== 'Investments' && (
+                            <p className="text-sm text-gray-600">
+                              {yearlyCategories.total_expense > 0 
+                                ? ((category.amount / yearlyCategories.total_expense) * 100).toFixed(1)
+                                : 0}%
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {spendingTrends.length > 0 && (
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-2xl font-bold mb-4">Monthly Breakdown</h2>
@@ -186,8 +231,8 @@ export const AnalyticsPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {spendingTrends.map((item, idx) => (
-                      <tr key={idx} className="border-b hover:bg-gray-50">
+                    {spendingTrends.map((item) => (
+                      <tr key={item.month} className="border-b hover:bg-gray-50">
                         <td className="px-4 py-2 text-black">{item.month}</td>
                         <td className="px-4 py-2 text-right text-green-600 font-semibold">{formatCurrency(item.income)}</td>
                         <td className="px-4 py-2 text-right text-red-600 font-semibold">{formatCurrency(item.expense)}</td>
@@ -226,7 +271,7 @@ export const AnalyticsPage = () => {
                 className="px-3 py-2 border rounded-md text-white bg-gray-700"
               >
                 {months.map((m, idx) => (
-                  <option key={idx} value={idx + 1}>
+                  <option key={m} value={idx + 1}>
                     {m}
                   </option>
                 ))}
@@ -280,7 +325,18 @@ export const AnalyticsPage = () => {
               {/* Category Distribution */}
               {monthlySummary.top_categories && monthlySummary.top_categories.length > 0 && (
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                  <h2 className="text-2xl font-bold mb-4 text-black">Expense Categories</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold mb-4 text-black">Monthly Expense Categories</h2>
+                    <label className="flex items-center gap-2 text-black cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={includeInvestments}
+                        onChange={(e) => setIncludeInvestments(e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-semibold">Include Investments</span>
+                    </label>
+                  </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                       <CategoryPieChart 
@@ -294,39 +350,21 @@ export const AnalyticsPage = () => {
                     <div>
                       <h3 className="text-xl font-semibold mb-4 text-black">Category Breakdown</h3>
                       <div className="space-y-2">
-                        {monthlySummary.top_categories.map((category: any, idx: number) => (
-                          <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        {monthlySummary.top_categories.map((category: any) => (
+                          <div key={category.name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                             <span className="text-black font-medium">{category.name}</span>
                             <div className="text-right">
                               <p className="text-red-600 font-bold">{formatCurrency(category.amount)}</p>
-                              <p className="text-sm text-gray-600">
-                                {((category.amount / monthlySummary.total_expense) * 100).toFixed(1)}%
-                              </p>
+                                {category.name !== 'Investments' && (
+                                <p className="text-sm text-gray-600">
+                                  {((category.amount / monthlySummary.total_expense) * 100).toFixed(1)}%
+                                </p>
+                                )}
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Insights */}
-              {insights && insights.length > 0 && (
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                  <h2 className="text-2xl font-bold mb-4 text-black">Insights & Recommendations</h2>
-                  <div className="space-y-3">
-                    {insights.map((insight, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded-lg border-l-4 ${getInsightClass(insight.severity)}`}
-                      >
-                        <p className="text-black">
-                          {insight.severity === 'alert' ? '⚠️ ' : insight.severity === 'warning' ? '⚡ ' : 'ℹ️ '}
-                          {insight.message}
-                        </p>
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}

@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import {
   Transaction,
   CreditCard,
+  CreditCardPayment,
   SavingsInvestment,
   SavingsComparison,
   MonthlySummary,
@@ -90,8 +91,8 @@ export const savingsApi = {
 
 // Analytics APIs
 export const analyticsApi = {
-  getMonthly: (year: number, month: number) =>
-    axiosInstance.get<MonthlySummary>(`/analytics/monthly/${year}/${month}`),
+  getMonthly: (year: number, month: number, includeInvestments: boolean = true) =>
+    axiosInstance.get<MonthlySummary>(`/analytics/monthly/${year}/${month}`, { params: { include_investments: includeInvestments } }),
   
   getYearly: (year: number) =>
     axiosInstance.get<YearlySummary>(`/analytics/yearly/${year}`),
@@ -102,8 +103,11 @@ export const analyticsApi = {
   getSpendingTrends: (months: number = 6, year?: number) =>
     axiosInstance.get(`/analytics/trends/spending`, { params: { months, ...(year && { year }) } }),
   
-  getCurrentSummary: () =>
-    axiosInstance.get<Analytics>('/analytics/summary/current'),
+  getCurrentSummary: (includeInvestments: boolean = false) =>
+    axiosInstance.get<Analytics>('/analytics/summary/current', { params: { include_investments: includeInvestments } }),
+  
+  getYearlyCategories: (year: number, includeInvestments: boolean = true) =>
+    axiosInstance.get(`/analytics/categories/yearly/${year}`, { params: { include_investments: includeInvestments } }),
 };
 
 // Salary APIs
@@ -128,6 +132,32 @@ export const salaryApi = {
   
   processMonthly: () =>
     axiosInstance.post('/salaries/process/monthly'),
+};
+
+// Credit Card Payment APIs
+export const paymentApi = {
+  create: (payment: Omit<CreditCardPayment, 'id' | 'created_at'>) =>
+    axiosInstance.post<CreditCardPayment>('/payments/', payment),
+  
+  getAll: (skip: number = 0, limit: number = 100) =>
+    axiosInstance.get<CreditCardPayment[]>('/payments/', { params: { skip, limit } }),
+  
+  getByCard: (cardId: number, skip: number = 0, limit: number = 100) =>
+    axiosInstance.get<CreditCardPayment[]>(`/payments/card/${cardId}`, { params: { skip, limit } }),
+  
+  getByDateRange: (startDate: string, endDate: string) =>
+    axiosInstance.get<CreditCardPayment[]>('/payments/range/', {
+      params: { start_date: startDate, end_date: endDate },
+    }),
+  
+  getById: (id: number) =>
+    axiosInstance.get<CreditCardPayment>(`/payments/${id}`),
+  
+  update: (id: number, payment: Omit<CreditCardPayment, 'id' | 'created_at'>) =>
+    axiosInstance.put<CreditCardPayment>(`/payments/${id}`, payment),
+  
+  delete: (id: number) =>
+    axiosInstance.delete(`/payments/${id}`),
 };
 
 export default axiosInstance;

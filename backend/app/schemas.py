@@ -11,6 +11,7 @@ class TransactionBase(BaseModel):
     description: Optional[str] = None
     payment_method: str  # "cash", "card", "upi", "bank"
     credit_card_id: Optional[int] = None
+    is_payment: bool = False  # whether this is a credit card payment
 
 
 class TransactionCreate(TransactionBase):
@@ -38,10 +39,32 @@ class CreditCardCreate(CreditCardBase):
     pass
 
 
+class CreditCardPaymentBase(BaseModel):
+    credit_card_id: int
+    payment_date: date
+    amount: float
+    payment_method: str  # "cash", "upi", "bank", "cheque"
+    transaction_id: Optional[int] = None
+    description: Optional[str] = None
+
+
+class CreditCardPaymentCreate(CreditCardPaymentBase):
+    pass
+
+
+class CreditCardPayment(CreditCardPaymentBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class CreditCard(CreditCardBase):
     id: int
     created_at: datetime
     transactions: List[Transaction] = []
+    payments: List[CreditCardPayment] = []
 
     class Config:
         from_attributes = True

@@ -111,3 +111,6 @@ logs/
 .vscode/extensions.json
 backend.bat
 frontend.bat
+run.bat
+run.py
+

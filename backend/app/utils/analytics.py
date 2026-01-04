@@ -155,6 +155,43 @@ def get_yearly_summary(db: Session, year: int) -> Dict:
     }
 
 
+def get_yearly_category_distribution(db: Session, year: int, include_investments: bool = False) -> Dict:
+    """Get yearly category distribution with option to include/exclude investments"""
+    category_map = {}
+    yearly_investments = 0
+    
+    for month in range(1, 13):
+        transactions = crud.get_transactions_by_month(db, year, month)
+        monthly_data = calculate_monthly_summary(transactions, db, year, month)
+        
+        # Aggregate category expenses
+        for category in monthly_data["top_categories"]:
+            if category["name"] != "Investments":
+                category_map[category["name"]] = category_map.get(category["name"], 0) + category["amount"]
+        
+        yearly_investments += monthly_data["investments"]
+    
+    # Add investments as a category if included
+    if include_investments and yearly_investments > 0:
+        category_map["Investments"] = yearly_investments
+    
+    # Sort categories by amount (descending)
+    top_categories_tuples = sorted(category_map.items(), key=lambda x: x[1], reverse=True)
+    
+    # Convert tuples to dictionaries
+    top_categories = [{"name": cat[0], "amount": round(cat[1], 2)} for cat in top_categories_tuples]
+    
+    total_expense = sum(cat["amount"] for cat in top_categories if cat["name"] != "Investments")
+    
+    return {
+        "year": year,
+        "include_investments": include_investments,
+        "top_categories": top_categories,
+        "total_expense": round(total_expense, 2),
+        "total_investments": round(yearly_investments, 2)
+    }
+
+
 def get_spending_trends(db: Session, months: int = 6) -> List[Dict]:
     """Get spending trends for the last N months"""
     from datetime import datetime, timedelta
@@ -181,8 +218,9 @@ def get_spending_trends(db: Session, months: int = 6) -> List[Dict]:
 def get_spending_trends_by_year(db: Session, year: int) -> List[Dict]:
     """Get spending trends for all 12 months of a specific year"""
     trends = []
-    
-    for month in range(1, 13):
+    current_month = date.today().month + 1 if date.today().year == year else 13
+
+    for month in range(1, current_month):
         transactions = crud.get_transactions_by_month(db, year, month)
         summary = calculate_monthly_summary(transactions, db, year, month)
         

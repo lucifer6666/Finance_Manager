@@ -1,14 +1,23 @@
-import { Transaction } from '../types';
+import { Transaction, CreditCard } from '../types';
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  cards?: CreditCard[];
   onDelete?: (id: number) => Promise<void>;
   loading?: boolean;
 }
 
-export const TransactionTable = ({ transactions, onDelete, loading = false }: TransactionTableProps) => {
+export const TransactionTable = ({ transactions, cards = [], onDelete, loading = false }: TransactionTableProps) => {
+  const cardMap = new Map(cards.map(card => [card.id, card]));
+
+  const getCardName = (cardId?: number) => {
+    if (!cardId) return '-';
+    const card = cardMap.get(cardId);
+    return card ? card.name : '-';
+  };
+
   const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
+    if (globalThis.confirm('Are you sure you want to delete this transaction?')) {
       try {
         await onDelete?.(id);
       } catch (error) {
@@ -34,6 +43,7 @@ export const TransactionTable = ({ transactions, onDelete, loading = false }: Tr
             <th className="px-6 py-3 text-left text-sm font-semibold text-black">Description</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-black">Category</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-black">Type</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-black">Card</th>
             <th className="px-6 py-3 text-right text-sm font-semibold text-black">Amount</th>
             <th className="px-6 py-3 text-center text-sm font-semibold text-black">Actions</th>
           </tr>
@@ -50,6 +60,15 @@ export const TransactionTable = ({ transactions, onDelete, loading = false }: Tr
                 }`}>
                   {transaction.type.toUpperCase()}
                 </span>
+              </td>
+              <td className="px-6 py-4 text-sm text-black">
+                {transaction.payment_method === 'card' ? (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                    {getCardName(transaction.credit_card_id)}
+                  </span>
+                ) : (
+                  '-'
+                )}
               </td>
               <td className={`px-6 py-4 text-sm font-semibold text-right ${
                 transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
