@@ -20,7 +20,7 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
   });
 
   const categories = {
-    expense: ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Healthcare', 'Groceries', 'Blinkit', 'Zomato', 'Other'],
+    expense: ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Healthcare', 'Groceries', 'Blinkit', 'Zomato', 'Vehicle', 'Rent', 'Family', 'Other'],
     income: ['Salary', 'Freelance', 'Bonus', 'Investment', 'Other'],
   };
 

@@ -12,7 +12,8 @@ import {
   CardUtilization,
 } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+// Get API URL from environment or use local IP for WiFi network access
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.17:8000/api';
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
