@@ -1,7 +1,10 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user, isAuthenticated } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -14,6 +17,11 @@ const Navbar = () => {
     { path: '/analytics', label: 'Analytics' },
   ];
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4">
@@ -23,8 +31,8 @@ const Navbar = () => {
             <h1 className="text-2xl font-bold text-black">Finance Manager</h1>
           </div>
 
-          <div className="flex gap-8">
-            {navLinks.map(({ path, label }) => (
+          <div className="flex gap-8 items-center">
+            {isAuthenticated && navLinks.map(({ path, label }) => (
               <Link
                 key={path}
                 to={path}
@@ -37,6 +45,17 @@ const Navbar = () => {
                 {label}
               </Link>
             ))}
+            {isAuthenticated && (
+              <div className="flex items-center gap-4 border-l border-gray-300 pl-4">
+                <span className="text-sm text-gray-600">Hi, {user}!</span>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 rounded-md text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

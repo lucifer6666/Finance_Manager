@@ -9,3 +9,4 @@ export { SavingsInvestmentTable } from './SavingsInvestmentTable';
 export { AddSavingsForm } from './AddSavingsForm';
 export { SalaryManagement } from './SalaryManagement';
 export { AddPaymentForm } from './AddPaymentForm';
+export { default as ProtectedRoute } from './ProtectedRoute';
