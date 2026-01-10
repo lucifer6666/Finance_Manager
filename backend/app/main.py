@@ -1,5 +1,10 @@
+import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import warnings
+warnings.filterwarnings("ignore")
+
+from backup_db import GDriveBackup
 from .database import engine, Base, SessionLocal
 from .routers import transactions, cards, analytics, savings, salary, payments, auth
 from .utils.auto_increment import run_startup_checks
@@ -22,6 +27,19 @@ except Exception as e:
     print(f"⚠ Warning: Startup checks encountered an error: {e}")
 finally:
     db.close()
+
+# Google Drive Backup on startup
+try:
+    with open('config.json') as f:
+        config = json.load(f)
+    print("\n" + "="*60)
+    google_drive_config = config.get("google_drive", {})
+    backup = GDriveBackup(google_drive_config)
+    # Backup only if 7+ days since last backup
+    backup.backup_local_db(google_drive_config.get("backup_file", './finance.db'))
+    print("="*60 + "\n")
+except Exception as e:
+    print(f"⚠ Warning: Startup checks encountered an error: {e}")
 
 # Initialize FastAPI app
 app = FastAPI(

@@ -2,5 +2,11 @@
   "credentials": {
     "username": "admin",
     "password": "password123"
+  },
+  "google_drive": {
+    "credentials_file": "credentials.json",
+    "token_file": "token.json",
+    "backup_file": "./finance.db", 
+    "backup_frequencies": "weekly"
   }
 }

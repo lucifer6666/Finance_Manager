@@ -114,5 +114,5 @@ frontend.bat
 run.bat
 run.py
 git_add.py
-
-
+backend/credentials.json
+backend/token.json
