@@ -132,7 +132,7 @@ class GDriveBackup:
             
             folders = results.get('files', [])
             if not folders:
-                print(f"✓ No backup folder found. First backup will be created.")
+                print("✓  No backup folder found. First backup will be created.")
                 return True, None
             
             folder_id = folders[0]['id']
@@ -148,7 +148,7 @@ class GDriveBackup:
             
             files = results.get('files', [])
             if not files:
-                print(f"✓ No previous backup found. Creating first backup.")
+                print("✓  No previous backup found. Creating first backup.")
                 return True, None
             
             last_backup = files[0]
@@ -165,7 +165,7 @@ class GDriveBackup:
             time_diff = current_time - last_backup_time
             
             if time_diff.days >= interval_days:
-                print(f"✓ Last backup was {time_diff.days} days ago. Creating new {self.frequency} backup.")
+                print(f"✓  Last backup was {time_diff.days} days ago. Creating new {self.frequency} backup.")
                 return True, {
                     'name': last_backup['name'],
                     'created': last_backup_time,
@@ -173,7 +173,7 @@ class GDriveBackup:
                 }
             else:
                 days_until_next = interval_days - time_diff.days
-                print(f"ℹ Last backup was {time_diff.days} days ago. Next {self.frequency} backup in {days_until_next} day(s).")
+                print(f"ℹ  Last backup was {time_diff.days} days ago. Next {self.frequency} backup in {days_until_next} day(s).")
                 return False, {
                     'name': last_backup['name'],
                     'created': last_backup_time,
@@ -197,7 +197,7 @@ class GDriveBackup:
         
         # Check frequency if specified
         if self.frequency is not None:
-            should_backup, backup_info = self._should_backup(folder_name)
+            should_backup, _ = self._should_backup(folder_name)
             if not should_backup:
                 return False
         
@@ -226,7 +226,7 @@ class GDriveBackup:
                 fields='id, name, createdTime'
             ).execute()
             
-            print(f"✓ Database backed up successfully!")
+            print("✓  Database backed up successfully!")
             print(f"  File: {file.get('name')}")
             print(f"  Folder: {folder_name}")
             print(f"  Google Drive ID: {file.get('id')}")
