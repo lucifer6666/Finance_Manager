@@ -43,6 +43,7 @@ class GDriveBackup:
         self.credentials_path = google_drive_config.get("credentials_file", None)
         self.token_path = google_drive_config.get("token_file", None)
         self.frequency = google_drive_config.get("backup_frequencies", "weekly")
+        self.last_backup = google_drive_config.get("last_backup", None)
         self.service = None
         assert self.credentials_path is not None, "Credentials file path must be provided in config."
         
@@ -193,7 +194,21 @@ class GDriveBackup:
             frequency: 'weekly', 'monthly', or None to always backup (default: None)
         """
         if not self.service:
-            self.authenticate()
+            try:
+                self.authenticate()
+            except Exception as _:
+                now = datetime.now()
+                last_backup = datetime.strptime(self.last_backup, "%Y-%m-%d")
+                if self.frequency == 'weekly':
+                    interval_days = 7
+                else:  # monthly
+                    interval_days = 30
+                if (now - last_backup).days >= interval_days:
+                    os.remove(self.token_path)
+                    backup.authenticate()
+                else:
+                    print("✓  ",interval_days - (now - last_backup).days, "days pending for the next backup")
+                    return False
         
         # Check frequency if specified
         if self.frequency is not None:
@@ -230,6 +245,7 @@ class GDriveBackup:
             print(f"  File: {file.get('name')}")
             print(f"  Folder: {folder_name}")
             print(f"  Google Drive ID: {file.get('id')}")
+            self.last_backup = datetime.now().strftime("%Y-%m-%d")
             return True
             
         except GoogleAPIError as e:

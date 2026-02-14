@@ -10,3 +10,4 @@ export { AddSavingsForm } from './AddSavingsForm';
 export { SalaryManagement } from './SalaryManagement';
 export { AddPaymentForm } from './AddPaymentForm';
 export { default as ProtectedRoute } from './ProtectedRoute';
+export { CategoryBreakdownDetail } from './CategoryBreakdownDetail';

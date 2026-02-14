@@ -14,7 +14,7 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
     type: 'expense' as 'income' | 'expense',
     category: '',
     description: '',
-    payment_method: 'upi' as 'cash' | 'card' | 'upi' | 'bank',
+    payment_method: 'upi' as 'upi' | 'cash' | 'card' | 'bank',
     credit_card_id: undefined as undefined | number,
     is_payment: false,
   });
@@ -53,7 +53,7 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
         type: 'expense',
         category: '',
         description: '',
-        payment_method: 'cash',
+        payment_method: 'upi',
         credit_card_id: undefined,
         is_payment: false,
       });

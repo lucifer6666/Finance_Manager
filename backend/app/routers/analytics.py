@@ -10,7 +10,8 @@ from ..utils.analytics import (
     get_yearly_summary,
     get_spending_trends,
     get_spending_trends_by_year,
-    get_yearly_category_distribution
+    get_yearly_category_distribution,
+    get_category_breakdown
 )
 
 YEAR_VALIDATION_ERROR = "Year must be between 1900 and 2100"
@@ -149,4 +150,38 @@ def get_current_summary(
     return schemas.Analytics(
         monthly_summary=monthly_summary,
         insights=insights
+    )
+
+
+@router.get("/category/breakdown/{year}/{month}/{category}", response_model=schemas.CategoryBreakdown)
+def get_category_breakdown_endpoint(
+    year: int,
+    month: int,
+    category: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed breakdown for a specific category in a month.
+    
+    Returns:
+    - Descriptions (normalized for better grouping)
+    - Payment methods breakdown
+    - Credit card transactions (if applicable)
+    
+    Args:
+        year: Year (1900-2100)
+        month: Month (1-12)
+        category: Category name (e.g., "Food", "Transport")
+    """
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+    if year < 1900 or year > 2100:
+        raise HTTPException(status_code=400, detail=YEAR_VALIDATION_ERROR)
+    
+    breakdown_data = get_category_breakdown(db, year, month, category)
+    
+    return schemas.CategoryBreakdown(
+        descriptions=[schemas.DescriptionBreakdown(**desc) for desc in breakdown_data["descriptions"]],
+        payment_methods=[schemas.PaymentMethodBreakdown(**pm) for pm in breakdown_data["payment_methods"]],
+        card_transactions=[schemas.CardTransaction(**ct) for ct in breakdown_data["card_transactions"]]
     )

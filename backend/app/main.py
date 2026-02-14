@@ -38,6 +38,9 @@ try:
     # Backup only if 7+ days since last backup
     backup.backup_local_db(google_drive_config.get("backup_file", './finance.db'))
     print("="*60 + "\n")
+    config['google_drive']['last_backup'] = backup.last_backup
+    with open("config.json", "w") as f:
+        json.dump(config, f)
 except Exception as e:
     print(f"⚠ Warning: Startup checks encountered an error: {e}")
 

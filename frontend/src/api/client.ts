@@ -109,6 +109,9 @@ export const analyticsApi = {
   
   getYearlyCategories: (year: number, includeInvestments: boolean = true) =>
     axiosInstance.get(`/analytics/categories/yearly/${year}`, { params: { include_investments: includeInvestments } }),
+
+  getCategoryBreakdown: (year: number, month: number, category: string) =>
+    axiosInstance.get(`/analytics/category/breakdown/${year}/${month}/${encodeURIComponent(category)}`),
 };
 
 // Salary APIs

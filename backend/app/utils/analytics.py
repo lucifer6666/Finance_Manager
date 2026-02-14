@@ -2,6 +2,7 @@ from typing import List, Dict, Tuple, Union
 from datetime import date
 from sqlalchemy.orm import Session
 from .. import models, crud
+from .text_normalizer import normalize_text
 
 
 def calculate_monthly_summary(transactions: List[models.Transaction], db: Session = None, year: int = None, month: int = None) -> Dict:
@@ -330,3 +331,103 @@ def calculate_savings_comparison(db: Session) -> Dict:
         "difference": round(difference, 2)
     }
 
+
+def get_category_breakdown(db: Session, year: int, month: int, category: str) -> Dict:
+    """
+    Get detailed breakdown for a specific category:
+    - Descriptions (normalized text)
+    - Payment methods
+    - Credit card transactions (if applicable)
+    
+    Args:
+        db: Database session
+        year: Year
+        month: Month
+        category: Category name to analyze
+        
+    Returns:
+        Dictionary with descriptions, payment_methods, and card_transactions
+    """
+    # Get transactions for the specified month and category
+    transactions = crud.get_transactions_by_month(db, year, month)
+    category_transactions = [
+        t for t in transactions 
+        if t.type == "expense" and t.category.lower() == category.lower()
+    ]
+    
+    # 1. Get description breakdown
+    descriptions_map: Dict[str, Tuple[int, float]] = {}
+    for t in category_transactions:
+        if t.description:
+            normalized = normalize_text(t.description)
+        else:
+            normalized = "No description"
+        
+        count, amount = descriptions_map.get(normalized, (0, 0.0))
+        descriptions_map[normalized] = (count + 1, amount + t.amount)
+    
+    # Convert to list and sort by amount
+    descriptions = [
+        {
+            "description": desc,
+            "count": count,
+            "amount": round(amount, 2)
+        }
+        for desc, (count, amount) in descriptions_map.items()
+    ]
+    descriptions.sort(key=lambda x: x["amount"], reverse=True)
+    
+    # 2. Get payment method breakdown
+    payment_methods_map: Dict[str, Tuple[int, float]] = {}
+    for t in category_transactions:
+        method = t.payment_method.lower() if t.payment_method else "unknown"
+        count, amount = payment_methods_map.get(method, (0, 0.0))
+        payment_methods_map[method] = (count + 1, amount + t.amount)
+    
+    # Convert to list and sort by amount
+    payment_methods = [
+        {
+            "method": method,
+            "count": count,
+            "amount": round(amount, 2)
+        }
+        for method, (count, amount) in payment_methods_map.items()
+    ]
+    payment_methods.sort(key=lambda x: x["amount"], reverse=True)
+    
+    # 3. Get credit card transactions (only for card payment method)
+    card_transactions_map: Dict[int, Tuple[str, int, float]] = {}  # card_id -> (card_name, count, amount)
+    
+    for t in category_transactions:
+        if t.payment_method and t.payment_method.lower() == "card" and t.credit_card_id:
+            # Get card details from database
+            card = db.query(models.CreditCard).filter(
+                models.CreditCard.id == t.credit_card_id
+            ).first()
+            
+            if card:
+                card_id = card.id
+                card_name = card.name
+                
+                if card_id in card_transactions_map:
+                    _, count, amount = card_transactions_map[card_id]
+                    card_transactions_map[card_id] = (card_name, count + 1, amount + t.amount)
+                else:
+                    card_transactions_map[card_id] = (card_name, 1, t.amount)
+    
+    # Convert to list and sort by amount
+    card_transactions = [
+        {
+            "cardName": card_name,
+            "count": count,
+            "amount": round(amount, 2)
+        }
+        for card_id, (card_name, count, amount) in card_transactions_map.items()
+    ]
+    card_transactions.sort(key=lambda x: x["amount"], reverse=True)
+    
+    return {
+        "descriptions": descriptions,
+        "payment_methods": payment_methods,
+        "card_transactions": card_transactions
+    }

@@ -116,3 +116,5 @@ run.py
 git_add.py
 backend/credentials.json
 backend/token.json
+backend/test_local.ipynb
+backend/config.json

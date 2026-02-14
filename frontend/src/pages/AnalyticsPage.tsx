@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { analyticsApi, transactionApi, paymentApi, savingsApi, creditCardApi } from '../api/client';
-import { MonthlyChart, CategoryPieChart } from '../components';
+import { MonthlyChart, CategoryPieChart, CategoryBreakdownDetail } from '../components';
 
 export const AnalyticsPage = () => {
   const currentDate = new Date();
@@ -15,6 +15,9 @@ export const AnalyticsPage = () => {
   const [loading, setLoading] = useState(false);
   const [exportType, setExportType] = useState<'monthly' | 'yearly'>('monthly');
   const [exporting, setExporting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<any>(null);
+  const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
 
   // Fetch spending trends
   useEffect(() => {
@@ -249,6 +252,27 @@ export const AnalyticsPage = () => {
       alert('Failed to export data. Please try again.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleCategoryClick = async (categoryName: string) => {
+    setSelectedCategory(categoryName);
+    setLoadingCategoryDetails(true);
+    try {
+      // This will be replaced with actual API call after backend is ready
+      // For now, we'll structure it to work with the CategoryBreakdownDetail component
+      const response = await analyticsApi.getCategoryBreakdown(year, month, categoryName);
+      setSelectedCategoryDetails(response.data);
+    } catch (error) {
+      console.error('Failed to fetch category breakdown:', error);
+      // For now, set empty data so the UI still shows
+      setSelectedCategoryDetails({
+        descriptions: [],
+        payment_methods: [],
+        card_transactions: []
+      });
+    } finally {
+      setLoadingCategoryDetails(false);
     }
   };
 
@@ -540,13 +564,24 @@ export const AnalyticsPage = () => {
                           value: cat.amount
                         }))} 
                         title="Category Distribution"
+                        onCategoryClick={handleCategoryClick}
+                        selectedCategory={selectedCategory || undefined}
                       />
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold mb-4 text-black">Category Breakdown</h3>
                       <div className="space-y-2">
                         {monthlySummary.top_categories.map((category: any) => (
-                          <div key={category.name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                          <button 
+                            key={category.name} 
+                            onClick={() => handleCategoryClick(category.name)}
+                            type="button"
+                            className={`w-full flex justify-between items-center p-3 rounded cursor-pointer transition text-left ${
+                              selectedCategory === category.name 
+                                ? 'bg-blue-100 border-2 border-blue-500' 
+                                : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                            }`}
+                          >
                             <span className="text-black font-medium">{category.name}</span>
                             <div className="text-right">
                               <p className="text-red-600 font-bold">{formatCurrency(category.amount)}</p>
@@ -556,11 +591,30 @@ export const AnalyticsPage = () => {
                                 </p>
                                 )}
                             </div>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Category Breakdown Details */}
+              {selectedCategory && (
+                <div className="mt-6">
+                  {loadingCategoryDetails ? (
+                    <div className="flex items-center justify-center p-8">
+                      <p className="text-black text-lg">Loading category details...</p>
+                    </div>
+                  ) : selectedCategoryDetails ? (
+                    <CategoryBreakdownDetail 
+                      categoryName={selectedCategory}
+                      descriptions={selectedCategoryDetails.descriptions || []}
+                      paymentMethods={selectedCategoryDetails.payment_methods || []}
+                      cardTransactions={selectedCategoryDetails.card_transactions || []}
+                      onClose={() => setSelectedCategory(null)}
+                    />
+                  ) : null}
                 </div>
               )}
             </>

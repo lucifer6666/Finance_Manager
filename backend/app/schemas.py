@@ -164,3 +164,31 @@ class Salary(SalaryBase):
 class Analytics(BaseModel):
     monthly_summary: MonthlySummary
     insights: List[Insight]
+
+
+class DescriptionBreakdown(BaseModel):
+    """Breakdown of a single description"""
+    description: str  # Normalized description
+    count: int  # Number of transactions
+    amount: float  # Total amount
+
+
+class PaymentMethodBreakdown(BaseModel):
+    """Breakdown by payment method"""
+    method: str  # Payment method (upi, cash, card, bank, cheque)
+    count: int  # Number of transactions
+    amount: float  # Total amount
+
+
+class CardTransaction(BaseModel):
+    """Credit card transaction breakdown"""
+    cardName: str  # Credit card name
+    count: int  # Number of transactions
+    amount: float  # Total amount
+
+
+class CategoryBreakdown(BaseModel):
+    """Complete breakdown for a specific category"""
+    descriptions: List[DescriptionBreakdown]
+    payment_methods: List[PaymentMethodBreakdown]
+    card_transactions: List[CardTransaction]
