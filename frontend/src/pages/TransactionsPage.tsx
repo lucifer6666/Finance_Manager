@@ -39,18 +39,15 @@ export const TransactionsPage = () => {
           </div>
           <div>
             <label htmlFor="filterYear" className="block text-sm font-semibold text-black mb-1">Year</label>
-            <select
+            <input
               id="filterYear"
+              type="number"
               value={year}
               onChange={(e) => setYear(Number.parseInt(e.target.value))}
+              min="1900"
+              max="2100"
               className="px-3 py-2 border rounded-md bg-white text-black"
-            >
-              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex items-end">
             <span className="text-sm text-gray-600">

@@ -342,17 +342,24 @@ def get_category_breakdown(db: Session, year: int, month: int, category: str) ->
     Args:
         db: Database session
         year: Year
-        month: Month
+        month: Month (1-12), or 0/-1 for all months (yearly)
         category: Category name to analyze
         
     Returns:
         Dictionary with descriptions, payment_methods, and card_transactions
     """
     # Get transactions for the specified month and category
-    transactions = crud.get_transactions_by_month(db, year, month)
+    if month == 0 or month == -1:
+        # Get all transactions for the year
+        start_date = date(year, 1, 1)
+        end_date = date(year + 1, 1, 1)
+        transactions = crud.get_transactions_by_date_range(db, start_date, end_date)
+    else:
+        transactions = crud.get_transactions_by_month(db, year, month)
+    
     category_transactions = [
         t for t in transactions 
-        if t.type == "expense" and t.category.lower() == category.lower()
+        if t.type == "expense" and (t.category.lower() == category.lower() or category.lower() == "all")
     ]
     
     # 1. Get description breakdown

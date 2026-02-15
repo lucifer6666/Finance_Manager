@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { analyticsApi, transactionApi, paymentApi, savingsApi, creditCardApi } from '../api/client';
-import { MonthlyChart, CategoryPieChart, CategoryBreakdownDetail } from '../components';
+import { MonthlyChart, CategoryPieChart, CategoryBreakdownDetail, PaymentMethodsBreakdown } from '../components';
 
 export const AnalyticsPage = () => {
   const currentDate = new Date();
@@ -18,6 +18,12 @@ export const AnalyticsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<any>(null);
   const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
+  const [showPaymentMethodsBreakdown, setShowPaymentMethodsBreakdown] = useState(false);
+  const [paymentMethodsDetails, setPaymentMethodsDetails] = useState<any>(null);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
+  const [showYearlyPaymentMethodsBreakdown, setShowYearlyPaymentMethodsBreakdown] = useState(false);
+  const [yearlyPaymentMethodsDetails, setYearlyPaymentMethodsDetails] = useState<any>(null);
+  const [loadingYearlyPaymentMethods, setLoadingYearlyPaymentMethods] = useState(false);
 
   // Fetch spending trends
   useEffect(() => {
@@ -276,6 +282,40 @@ export const AnalyticsPage = () => {
     }
   };
 
+  const handleShowPaymentMethodsBreakdown = async () => {
+    setShowPaymentMethodsBreakdown(true);
+    setLoadingPaymentMethods(true);
+    try {
+      const response = await analyticsApi.getCategoryBreakdown(year, month, 'all');
+      setPaymentMethodsDetails(response.data);
+    } catch (error) {
+      console.error('Failed to fetch payment methods breakdown:', error);
+      setPaymentMethodsDetails({
+        payment_methods: [],
+        card_transactions: []
+      });
+    } finally {
+      setLoadingPaymentMethods(false);
+    }
+  };
+
+  const handleShowYearlyPaymentMethodsBreakdown = async () => {
+    setShowYearlyPaymentMethodsBreakdown(true);
+    setLoadingYearlyPaymentMethods(true);
+    try {
+      const response = await analyticsApi.getCategoryBreakdown(year, 0, 'all');
+      setYearlyPaymentMethodsDetails(response.data);
+    } catch (error) {
+      console.error('Failed to fetch yearly payment methods breakdown:', error);
+      setYearlyPaymentMethodsDetails({
+        payment_methods: [],
+        card_transactions: []
+      });
+    } finally {
+      setLoadingYearlyPaymentMethods(false);
+    }
+  };
+
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -464,6 +504,35 @@ export const AnalyticsPage = () => {
               </div>
             </div>
           )}
+
+          {/* Yearly Payment Methods Breakdown Button */}
+          {spendingTrends.length > 0 && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={handleShowYearlyPaymentMethodsBreakdown}
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-semibold transition"
+              >
+                💳 Payment Methods & Card Transactions - Yearly
+              </button>
+            </div>
+          )}
+
+          {/* Yearly Payment Methods Breakdown Details */}
+          {showYearlyPaymentMethodsBreakdown && (
+            <div className="mt-6">
+              {loadingYearlyPaymentMethods ? (
+                <div className="flex items-center justify-center p-8">
+                  <p className="text-black text-lg">Loading yearly payment methods breakdown...</p>
+                </div>
+              ) : yearlyPaymentMethodsDetails ? (
+                <PaymentMethodsBreakdown 
+                  paymentMethods={yearlyPaymentMethodsDetails.payment_methods || []}
+                  cardTransactions={yearlyPaymentMethodsDetails.card_transactions || []}
+                  onClose={() => setShowYearlyPaymentMethodsBreakdown(false)}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       )}
 
@@ -596,6 +665,33 @@ export const AnalyticsPage = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Payment Methods Breakdown Button */}
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={handleShowPaymentMethodsBreakdown}
+                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-semibold transition"
+                >
+                  💳 Payment Methods & Card Transactions
+                </button>
+              </div>
+
+              {/* Payment Methods Breakdown Details */}
+              {showPaymentMethodsBreakdown && (
+                <div className="mt-6">
+                  {loadingPaymentMethods ? (
+                    <div className="flex items-center justify-center p-8">
+                      <p className="text-black text-lg">Loading payment methods breakdown...</p>
+                    </div>
+                  ) : paymentMethodsDetails ? (
+                    <PaymentMethodsBreakdown 
+                      paymentMethods={paymentMethodsDetails.payment_methods || []}
+                      cardTransactions={paymentMethodsDetails.card_transactions || []}
+                      onClose={() => setShowPaymentMethodsBreakdown(false)}
+                    />
+                  ) : null}
                 </div>
               )}
 

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useCreditCards, usePayments } from '../hooks';
-import { CreditCardSummary, AddPaymentForm } from '../components';
+import { transactionApi } from '../api/client';
+import { CreditCardSummary, AddPaymentForm, CardTransactionsByCycle } from '../components';
+import { Transaction } from '../types';
 
 interface CreditCardForm {
   name: string;
@@ -14,6 +16,7 @@ interface CreditCardForm {
 export const CreditCardsPage = () => {
   const { cards, addCard, deleteCard } = useCreditCards();
   const { payments, fetchPayments, addPayment, deletePayment } = usePayments();
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
@@ -31,6 +34,20 @@ export const CreditCardsPage = () => {
   useEffect(() => {
     fetchPayments();
   }, [fetchPayments]);
+
+  // Fetch all transactions for card cycle display
+  useEffect(() => {
+    const fetchAllTransactions = async () => {
+      try {
+        const response = await transactionApi.getAll(0, 1000);
+        setAllTransactions(response.data);
+      } catch (error) {
+        console.error('Failed to fetch transactions:', error);
+      }
+    };
+
+    fetchAllTransactions();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -212,25 +229,8 @@ export const CreditCardsPage = () => {
 
       <CreditCardSummary cards={cards} />
 
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-black">Bill Payments</h2>
-        <button
-          onClick={() => setShowPaymentForm(!showPaymentForm)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          {showPaymentForm ? 'Cancel' : '+ Log Payment'}
-        </button>
-      </div>
-
-      {showPaymentForm && cards.length > 0 && (
-        <AddPaymentForm 
-          cards={cards}
-          onAdd={handleAddPayment}
-        />
-      )}
-
       {/* Month and Year Filter */}
-      {payments.length > 0 && (
+      {(payments.length > 0 || cards.length > 0) && (
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="flex gap-4">
             <div>
@@ -250,18 +250,15 @@ export const CreditCardsPage = () => {
             </div>
             <div>
               <label htmlFor="filterYear" className="block text-sm font-semibold text-black mb-1">Year</label>
-              <select
+              <input
                 id="filterYear"
+                type="number"
                 value={filterYear}
-                onChange={(e) => setFilterYear(Number.parseInt(e.target.value))}
+                onChange={(e) => setFilterYear(Number.parseInt(e.target.value) || new Date().getFullYear())}
+                min="1900"
+                max="2100"
                 className="px-3 py-2 border rounded-md bg-white text-black"
-              >
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div className="flex items-end">
               <span className="text-sm text-gray-600">
@@ -270,6 +267,23 @@ export const CreditCardsPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-black">Bill Payments</h2>
+        <button
+          onClick={() => setShowPaymentForm(!showPaymentForm)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          {showPaymentForm ? 'Cancel' : '+ Log Payment'}
+        </button>
+      </div>
+
+      {showPaymentForm && cards.length > 0 && (
+        <AddPaymentForm 
+          cards={cards}
+          onAdd={handleAddPayment}
+        />
       )}
 
       {filteredPayments.length > 0 && (
@@ -323,37 +337,48 @@ export const CreditCardsPage = () => {
         </div>
       )}
 
+      {/* Card Transactions by Billing Cycle */}
+      <CardTransactionsByCycle 
+        cards={cards} 
+        transactions={allTransactions}
+        filterMonth={filterMonth}
+        filterYear={filterYear}
+      />
+
       {cards.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Card Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Bank</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Limit</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-black">Cycle</th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-black">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cards.map(card => (
-                <tr key={card.id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-black">{card.name}</td>
-                  <td className="px-6 py-4 text-sm text-black">{card.bank_name}</td>
-                  <td className="px-6 py-4 text-sm text-black">₹{card.credit_limit.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-sm text-black">{card.billing_cycle_start}-{card.billing_cycle_end}</td>
-                  <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleDelete(card.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-black">Credit Cards</h2>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-100 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-black">Card Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-black">Bank</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-black">Limit</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-black">Cycle</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold text-black">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {cards.map(card => (
+                  <tr key={card.id} className="border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium text-black">{card.name}</td>
+                    <td className="px-6 py-4 text-sm text-black">{card.bank_name}</td>
+                    <td className="px-6 py-4 text-sm text-black">₹{card.credit_limit.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm text-black">{card.billing_cycle_start}-{card.billing_cycle_end}</td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDelete(card.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

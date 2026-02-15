@@ -11,3 +11,5 @@ export { SalaryManagement } from './SalaryManagement';
 export { AddPaymentForm } from './AddPaymentForm';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { CategoryBreakdownDetail } from './CategoryBreakdownDetail';
+export { CardTransactionsByCycle } from './CardTransactionsByCycle';
+export { PaymentMethodsBreakdown } from './PaymentMethodsBreakdown';

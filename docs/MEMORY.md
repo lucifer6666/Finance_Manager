@@ -3,7 +3,7 @@
 ## Project Overview
 A full-stack personal finance management application built with React + FastAPI for tracking transactions, credit cards, and investments with recurring auto-entry support and salary management.
 
-**Current Date**: December 28, 2025
+**Current Date**: February 15, 2026
 
 ## Session History
 
@@ -521,7 +521,7 @@ Recommended testing strategy:
 - Integration tests for API endpoints
 - Component tests for React components
 
-### Session 5: Salary Start Date Enhancement (Current)
+### Session 5: Salary Start Date Enhancement
 - **Fixed Salary Button**: Removed `handleCancel()` from button onClick to properly toggle form visibility
 - **Added Start Date Tracking**:
   - Added `start_date` field to Salary model (Date column)
@@ -537,6 +537,49 @@ Recommended testing strategy:
 - **Database Migration**: 
   - Created robust migration script handling SQLite limitations
   - Added start_date column with text() wrapper for raw SQL execution
-- E2E tests for user workflows
+
+### Session 6: Payment Methods & Card Transactions Breakdown (Current - February 15, 2026)
+- **Backend Enhancement**:
+  - Updated `/api/analytics/category/breakdown/{year}/{month}/{category}` endpoint
+    - Now supports `month=0` or `month=-1` for yearly data aggregation
+    - Updated validation to accept 0/-1 in addition to 1-12
+  - Enhanced `get_category_breakdown()` function in `utils/analytics.py`
+    - Detects month=0/-1 and fetches all 12 months of transactions
+    - Aggregates payment methods and card transactions across entire year
+    - Returns consolidated breakdown data
+
+- **New Component: PaymentMethodsBreakdown.tsx**
+  - Two-column collapsible layout (Payment Methods | Card Transactions)
+  - Formatted payment method names (UPI, Cash, Card, Bank Transfer, Cheque)
+  - Displays transaction counts and amounts for each method/card
+  - Summary stats showing total card spending and percentage
+  - Currency formatting with Indian Rupee symbol (₹)
+  - Responsive design (stacks on mobile, side-by-side on desktop)
+  - Close button to dismiss breakdown
+
+- **Monthly Analysis Integration**:
+  - Added state variables: `showPaymentMethodsBreakdown`, `paymentMethodsDetails`, `loadingPaymentMethods`
+  - Added handler: `handleShowPaymentMethodsBreakdown()` that calls endpoint with `category='all'`
+  - Added purple button: **"💳 Payment Methods & Card Transactions"** after category breakdown
+  - Conditional rendering with loading states
+
+- **Yearly Analysis Integration**:
+  - Added state variables: `showYearlyPaymentMethodsBreakdown`, `yearlyPaymentMethodsDetails`, `loadingYearlyPaymentMethods`
+  - Added handler: `handleShowYearlyPaymentMethodsBreakdown()` that calls endpoint with `month=0`
+  - Added button: **"💳 Payment Methods & Card Transactions - Yearly"** after monthly breakdown table
+  - Reuses same PaymentMethodsBreakdown component for both views
+
+- **Component Exports**:
+  - Updated `components/index.ts` to export `PaymentMethodsBreakdown`
+  - Updated AnalyticsPage import to include new component
+
+- **Key Features**:
+  - Dual view support (monthly & yearly)
+  - Reusable component handles both use cases
+  - Dynamic data loading on button click
+  - Error handling with empty states
+  - Proper currency and payment method formatting
 
 Use pytest (backend) and Vitest/Jest (frontend).
+
+```

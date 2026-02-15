@@ -90,7 +90,7 @@ export const CategoryBreakdownDetail = ({
             className="w-full text-left mb-4 flex justify-between items-center p-3 bg-indigo-100 hover:bg-indigo-200 rounded transition"
           >
             <h3 className="font-bold text-black">📝 Description Breakdown</h3>
-            <span className="text-xl">{expandDescriptions ? '▼' : '▶'}</span>
+            <span className="text-xl">{expandDescriptions ? '▽' : '▷'}</span>
           </button>
 
           {expandDescriptions && (
@@ -101,14 +101,18 @@ export const CategoryBreakdownDetail = ({
                     key={`desc-${desc.description}`}
                     className="p-3 bg-white border border-gray-200 rounded hover:shadow-md transition"
                   >
-                    <p className="text-sm font-semibold text-black truncate" title={desc.description}>
-                      {desc.description || 'No description'}
-                    </p>
-                    <div className="flex justify-between items-center mt-2 text-xs text-gray-600">
-                      <span>{desc.count}x</span>
-                      <span className="font-bold text-indigo-600">{formatCurrency(desc.amount)}</span>
+                    <div className="flex justify-between items-center">
+                      <p className="text-md font-semibold text-black" title={desc.description}>
+                        {desc.description || 'No description'}
+                      </p>
+                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                        {desc.count}x
+                      </span>
                     </div>
-                    <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                    <p className="text-lg font-bold text-indigo-600 mt-1">
+                      {formatCurrency(desc.amount)}
+                    </p>
+                    <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
                       <div
                         className="bg-indigo-500 h-1.5 rounded-full"
                         style={{ width: `${(desc.amount / totalAmount) * 100}%` }}
@@ -130,7 +134,7 @@ export const CategoryBreakdownDetail = ({
             className="w-full text-left mb-4 flex justify-between items-center p-3 bg-green-100 hover:bg-green-200 rounded transition"
           >
             <h3 className="font-bold text-black">💳 Payment Methods</h3>
-            <span className="text-xl">{expandPayments ? '▼' : '▶'}</span>
+            <span className="text-xl">{expandPayments ? '▽' : '▷'}</span>
           </button>
 
           {expandPayments && (
@@ -175,7 +179,7 @@ export const CategoryBreakdownDetail = ({
             disabled={cardTransactions.length === 0}
           >
             <h3 className="font-bold text-black">🏦 Card Transactions</h3>
-            <span className="text-xl">{expandCards ? '▼' : '▶'}</span>
+            <span className="text-xl">{expandCards ? '▽' : '▷'}</span>
           </button>
 
           {cardTransactions.length > 0 && expandCards && (

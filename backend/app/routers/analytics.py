@@ -170,11 +170,11 @@ def get_category_breakdown_endpoint(
     
     Args:
         year: Year (1900-2100)
-        month: Month (1-12)
+        month: Month (1-12), or 0/-1 for all months (yearly)
         category: Category name (e.g., "Food", "Transport")
     """
-    if month < 1 or month > 12:
-        raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+    if month != 0 and month != -1 and (month < 1 or month > 12):
+        raise HTTPException(status_code=400, detail="Month must be between 1 and 12, or 0/-1 for yearly")
     if year < 1900 or year > 2100:
         raise HTTPException(status_code=400, detail=YEAR_VALIDATION_ERROR)
     
