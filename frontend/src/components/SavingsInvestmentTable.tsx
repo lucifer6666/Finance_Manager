@@ -3,8 +3,8 @@ import { SavingsInvestment } from '../types';
 
 interface SavingsInvestmentTableProps {
   investments: SavingsInvestment[];
-  onDelete?: (id: number) => Promise<void>;
-  onUpdate?: (id: number, investment: Partial<SavingsInvestment>) => Promise<void>;
+  onDelete?: (id: number) => Promise<void | any>;
+  onUpdate?: (id: number, investment: Partial<SavingsInvestment>) => Promise<void | any>;
   loading?: boolean;
 }
 
@@ -49,9 +49,10 @@ export const SavingsInvestmentTable = ({ investments, onDelete, onUpdate, loadin
 
   const handleSaveRecurring = async (id: number) => {
     try {
+      const recurringType = editRecurring.is_recurring ? (editRecurring.recurring_type as 'monthly' | 'yearly' | null) : null;
       await onUpdate?.(id, {
-        is_recurring: editRecurring.is_recurring ? 1 : 0,
-        recurring_type: editRecurring.is_recurring ? editRecurring.recurring_type : null,
+        is_recurring: editRecurring.is_recurring,
+        recurring_type: recurringType,
       });
       setEditingId(null);
     } catch (error) {

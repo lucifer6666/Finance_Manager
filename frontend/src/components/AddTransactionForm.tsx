@@ -3,7 +3,7 @@ import { Transaction, CreditCard } from '../types';
 
 interface AddTransactionFormProps {
   cards?: CreditCard[];
-  onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void>;
+  onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void | Transaction>;
   loading?: boolean;
 }
 

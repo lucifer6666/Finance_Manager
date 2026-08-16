@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SavingsInvestment } from '../types';
 
 interface AddSavingsFormProps {
-  onAdd: (investment: Omit<SavingsInvestment, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  onAdd: (investment: Omit<SavingsInvestment, 'id' | 'created_at' | 'updated_at'>) => Promise<SavingsInvestment | void>;
   loading?: boolean;
 }
 

@@ -5,6 +5,9 @@ import {
   CreditCardPayment,
   SavingsInvestment,
   SavingsComparison,
+  SavingsPlan,
+  SavingsEntry,
+  EMI,
   MonthlySummary,
   YearlySummary,
   Insight,
@@ -76,6 +79,33 @@ export const savingsApi = {
   
   getAll: () =>
     axiosInstance.get<SavingsInvestment[]>('/savings/'),
+
+  getPlans: () =>
+    axiosInstance.get<SavingsPlan[]>('/savings/plans'),
+
+  createPlan: (plan: { name: string; investment_type: string; amount: number; recurring_type?: 'monthly' | 'yearly' | null; due_date?: number; start_date?: string; end_date?: string | null; is_active?: boolean; description?: string }) =>
+    axiosInstance.post<SavingsPlan>('/savings/plans', plan),
+
+  updatePlan: (id: number, plan: Partial<SavingsPlan>) =>
+    axiosInstance.put<SavingsPlan>(`/savings/plans/${id}`, plan),
+
+  backfillEntries: () =>
+    axiosInstance.post('/savings/plans/backfill'),
+
+  deletePlan: (id: number) =>
+    axiosInstance.delete(`/savings/plans/${id}`),
+
+  getEntries: () =>
+    axiosInstance.get<SavingsEntry[]>('/savings/entries'),
+
+  getEntriesByMonth: (year: number, month: number) =>
+    axiosInstance.get<SavingsEntry[]>(`/savings/entries/monthly/${year}/${month}`),
+
+  createEntry: (entry: { plan_id: number; amount: number; entry_date: string; description?: string; source?: 'auto' | 'manual' }) =>
+    axiosInstance.post<SavingsEntry>('/savings/entries', entry),
+
+  deleteEntry: (id: number) =>
+    axiosInstance.delete(`/savings/entries/${id}`),
   
   getById: (id: number) =>
     axiosInstance.get<SavingsInvestment>(`/savings/${id}`),
@@ -88,6 +118,9 @@ export const savingsApi = {
   
   getComparison: () =>
     axiosInstance.get<SavingsComparison>('/savings/comparison/current'),
+
+  migrateToPlans: () =>
+    axiosInstance.post('/savings/migrate/legacy-to-plans'),
 };
 
 // Analytics APIs
@@ -116,7 +149,7 @@ export const analyticsApi = {
 
 // Salary APIs
 export const salaryApi = {
-  create: (salary: { name: string; amount: number; is_active?: boolean; description?: string }) =>
+  create: (salary: { name: string; amount: number; start_date?: string; is_active?: boolean; description?: string }) =>
     axiosInstance.post('/salaries/', salary),
   
   getAll: () =>
@@ -128,7 +161,7 @@ export const salaryApi = {
   getById: (id: number) =>
     axiosInstance.get(`/salaries/${id}`),
   
-  update: (id: number, salary: { name?: string; amount?: number; is_active?: boolean; description?: string }) =>
+  update: (id: number, salary: { name?: string; amount?: number; start_date?: string; is_active?: boolean; description?: string }) =>
     axiosInstance.put(`/salaries/${id}`, salary),
   
   delete: (id: number) =>
@@ -136,6 +169,30 @@ export const salaryApi = {
   
   processMonthly: () =>
     axiosInstance.post('/salaries/process/monthly'),
+};
+
+// EMI APIs
+export const emiApi = {
+  create: (emi: { name: string; amount: number; type?: string; category: string; description: string; payment_method?: string; credit_card_id?: number | null; due_date: number; start_date?: string; end_date?: string | null; is_active?: boolean }) =>
+    axiosInstance.post('/emi/', emi),
+
+  getAll: () =>
+    axiosInstance.get<EMI[]>('/emi/'),
+
+  getActive: () =>
+    axiosInstance.get<EMI[]>('/emi/active'),
+
+  getById: (id: number) =>
+    axiosInstance.get<EMI>(`/emi/${id}`),
+
+  update: (id: number, emi: { name?: string; amount?: number; type?: string; category?: string; description?: string; payment_method?: string; credit_card_id?: number | null; due_date?: number; start_date?: string; end_date?: string | null; is_active?: boolean }) =>
+    axiosInstance.put<EMI>(`/emi/${id}`, emi),
+
+  delete: (id: number) =>
+    axiosInstance.delete(`/emi/${id}`),
+
+  processMonthly: () =>
+    axiosInstance.post('/emi/process/monthly'),
 };
 
 // Credit Card Payment APIs

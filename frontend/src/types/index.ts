@@ -60,11 +60,56 @@ export interface SavingsComparison {
   difference: number;
 }
 
+export interface SavingsPlan {
+  id: number;
+  name: string;
+  investment_type: string;
+  amount: number;
+  recurring_type?: 'monthly' | 'yearly' | null;
+  due_date: number;
+  start_date?: string;
+  end_date?: string | null;
+  is_active: boolean;
+  description?: string;
+  last_processed_date?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavingsEntry {
+  id: number;
+  plan_id: number;
+  amount: number;
+  entry_date: string;
+  description?: string;
+  source: 'auto' | 'manual';
+  created_at: string;
+}
+
+export interface EMI {
+  id: number;
+  name: string;  // e.g., "Home Loan", "Car EMI"
+  amount: number;
+  type: string;  // "expense" (or "income" in theory, but should be "expense" for EMI)
+  category: string;  // e.g., "EMI", "Loan"
+  description: string;  // e.g., "Home Loan EMI"
+  payment_method: string;  // "bank", "card", "cash", "upi"
+  credit_card_id?: number | null;  // For credit card EMIs
+  due_date: number;  // Day of month (1-31)
+  start_date?: string;
+  end_date?: string | null;
+  is_active: boolean;
+  last_added_date?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MonthlySummary {
   month: string;
   total_income: number;
   total_expense: number;
   savings: number;
+  investments: number;
   top_categories: Array<[string, number]>;
 }
 

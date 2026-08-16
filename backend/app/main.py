@@ -6,7 +6,7 @@ warnings.filterwarnings("ignore")
 
 from backup_db import GDriveBackup
 from .database import engine, Base, SessionLocal
-from .routers import transactions, cards, analytics, savings, salary, payments, auth
+from .routers import transactions, cards, analytics, savings, salary, payments, auth, emi
 from .utils.auto_increment import run_startup_checks
 
 # Create all database tables
@@ -21,6 +21,8 @@ try:
     print("="*60)
     print(f"✓ Salary entries: {startup_check_results['salaries']['message']}")
     print(f"✓ Recurring investments: {startup_check_results['investments']['message']}")
+    print(f"✓ EMI entries: {startup_check_results['emis']['message']}")
+    print(f"✓ Saving plans: {startup_check_results['saving_plans']['message']}")
     print(f"✓ Total auto-entries processed: {startup_check_results['all_processed']}")
     print("="*60 + "\n")
 except Exception as e:
@@ -89,6 +91,12 @@ app.include_router(
     salary.router,
     prefix="/api/salaries",
     tags=["Salaries"]
+)
+
+app.include_router(
+    emi.router,
+    prefix="/api/emi",
+    tags=["EMIs"]
 )
 
 app.include_router(

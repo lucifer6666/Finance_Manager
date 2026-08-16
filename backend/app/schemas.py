@@ -123,6 +123,64 @@ class SavingsInvestment(SavingsInvestmentBase):
         from_attributes = True
 
 
+class SavingsPlanBase(BaseModel):
+    name: str
+    investment_type: str
+    amount: float
+    recurring_type: Optional[str] = None  # monthly/yearly
+    due_date: int = 1
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    is_active: bool = True
+    description: Optional[str] = None
+
+
+class SavingsPlanCreate(SavingsPlanBase):
+    pass
+
+
+class SavingsPlanUpdate(BaseModel):
+    name: Optional[str] = None
+    investment_type: Optional[str] = None
+    amount: Optional[float] = None
+    recurring_type: Optional[str] = None
+    due_date: Optional[int] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    is_active: Optional[bool] = None
+    description: Optional[str] = None
+
+
+class SavingsPlan(SavingsPlanBase):
+    id: int
+    last_processed_date: Optional[date] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SavingsEntryBase(BaseModel):
+    plan_id: int
+    amount: float
+    entry_date: date
+    description: Optional[str] = None
+    source: str = "auto"
+
+
+class SavingsEntryCreate(SavingsEntryBase):
+    pass
+
+
+class SavingsEntry(SavingsEntryBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class SavingsComparison(BaseModel):
     account_balance: float  # Current month's income - expense
     total_invested: float  # Total amount initially invested
@@ -152,6 +210,48 @@ class SalaryUpdate(BaseModel):
 
 
 class Salary(SalaryBase):
+    id: int
+    last_added_date: Optional[date] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class EMIBase(BaseModel):
+    name: str  # e.g., "Home Loan", "Car EMI" - for easy tracking
+    amount: float
+    type: str = "expense"  # Transaction type (should be "expense" for EMI)
+    category: str  # e.g., "EMI", "Loan"
+    description: str  # e.g., "Home Loan EMI"
+    payment_method: str = "bank"  # "bank", "card", "cash", "upi"
+    credit_card_id: Optional[int] = None  # For credit card EMIs
+    due_date: int  # Day of month (1-31)
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    is_active: bool = True
+
+
+class EMICreate(EMIBase):
+    pass
+
+
+class EMIUpdate(BaseModel):
+    name: Optional[str] = None
+    amount: Optional[float] = None
+    type: Optional[str] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    payment_method: Optional[str] = None
+    credit_card_id: Optional[int] = None
+    due_date: Optional[int] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    is_active: Optional[bool] = None
+
+
+class EMI(EMIBase):
     id: int
     last_added_date: Optional[date] = None
     created_at: datetime

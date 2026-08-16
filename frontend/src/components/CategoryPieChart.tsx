@@ -76,7 +76,7 @@ export const CategoryPieChart = ({
               );
             })}
           </Pie>
-          <Tooltip formatter={(value) => `₹${value.toFixed(2)}`} />
+          <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
           <Legend />
         </PieChart>
       </ResponsiveContainer>

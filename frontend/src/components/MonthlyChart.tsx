@@ -27,11 +27,12 @@ export const MonthlyChart = ({ data, title = 'Monthly Trends' }: MonthlyChartPro
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />
-          <Tooltip formatter={(value) => `₹${value.toFixed(2)}`} />
+          <Tooltip formatter={(value) => `₹${Number(value).toFixed(2)}`} />
           <Legend />
           <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} />
           <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} />
           <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={2} />
+          <Line type="monotone" dataKey="investments" stroke="#118baa" strokeWidth={2} />
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -9,7 +9,7 @@ export const AnalyticsPage = () => {
   const [viewMode, setViewMode] = useState<'trends' | 'monthly' | 'export'>('trends');
   const [spendingTrends, setSpendingTrends] = useState<any[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<any>(null);
-  const [insights, setInsights] = useState<any[]>([]);
+  const [_insights, setInsights] = useState<any[]>([]);
   const [yearlyCategories, setYearlyCategories] = useState<any>(null);
   const [includeInvestments, setIncludeInvestments] = useState(false);
   const [loading, setLoading] = useState(false);

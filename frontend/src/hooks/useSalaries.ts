@@ -36,7 +36,7 @@ export const useSalaries = () => {
     fetchSalaries();
   }, []);
 
-  const addSalary = async (salary: { name: string; amount: number; is_active?: boolean; description?: string }) => {
+  const addSalary = async (salary: { name: string; amount: number; start_date?: string; is_active?: boolean; description?: string }) => {
     try {
       setLoading(true);
       const response = await salaryApi.create(salary);
@@ -52,7 +52,7 @@ export const useSalaries = () => {
     }
   };
 
-  const updateSalary = async (id: number, updates: { name?: string; amount?: number; is_active?: boolean; description?: string }) => {
+  const updateSalary = async (id: number, updates: { name?: string; amount?: number; start_date?: string; is_active?: boolean; description?: string }) => {
     try {
       setLoading(true);
       const response = await salaryApi.update(id, updates);

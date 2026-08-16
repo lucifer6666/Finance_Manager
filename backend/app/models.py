@@ -89,6 +89,40 @@ class SavingsInvestment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class SavingsPlan(Base):
+    __tablename__ = "savings_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    investment_type = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    recurring_type = Column(String, nullable=True)  # "monthly" or "yearly"
+    due_date = Column(Integer, nullable=False, default=1)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)
+    is_active = Column(Integer, default=1, nullable=False)
+    last_processed_date = Column(Date, nullable=True)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    entries = relationship("SavingsEntry", back_populates="plan")
+
+
+class SavingsEntry(Base):
+    __tablename__ = "savings_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey("savings_plans.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    entry_date = Column(Date, nullable=False)
+    description = Column(String, nullable=True)
+    source = Column(String, nullable=False, default="auto")  # auto/manual
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    plan = relationship("SavingsPlan", back_populates="entries")
+
+
 class Salary(Base):
     __tablename__ = "salaries"
 
@@ -101,3 +135,26 @@ class Salary(Base):
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class EMI(Base):
+    __tablename__ = "emis"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)  # e.g., "Home Loan", "Car EMI" - for easy tracking
+    amount = Column(Float, nullable=False)  # EMI amount
+    type = Column(String, default="expense", nullable=False)  # Transaction type (should be "expense" for EMI)
+    category = Column(String, nullable=False)  # e.g., "EMI", "Loan"
+    description = Column(String, nullable=False)  # e.g., "Home Loan EMI", "Car EMI"
+    payment_method = Column(String, default="bank", nullable=False)  # "bank", "card", "cash", "upi"
+    credit_card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=True)  # For credit card EMIs
+    due_date = Column(Integer, nullable=False)  # Day of month on which EMI is deducted (1-31)
+    start_date = Column(Date, nullable=False)  # Date when EMI starts
+    end_date = Column(Date, nullable=True)  # Date when EMI ends (optional)
+    is_active = Column(Integer, default=1, nullable=False)  # 0=inactive, 1=active
+    last_added_date = Column(Date, nullable=True)  # Last date EMI expense was auto-added
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationship for credit card
+    credit_card = relationship("CreditCard", foreign_keys=[credit_card_id])

@@ -5,39 +5,27 @@ from .. import models, crud
 from .text_normalizer import normalize_text
 
 
+def _get_monthly_savings_entry_total(db: Session, year: int, month: int) -> float:
+    """Sum current-month ledger entries from the savings plan system."""
+    start_date = date(year, month, 1)
+    end_date = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+
+    entries = db.query(models.SavingsEntry).filter(
+        models.SavingsEntry.entry_date >= start_date,
+        models.SavingsEntry.entry_date < end_date
+    ).all()
+
+    return round(sum(entry.amount for entry in entries), 2)
+
+
 def calculate_monthly_summary(transactions: List[models.Transaction], db: Session = None, year: int = None, month: int = None) -> Dict:
-    """Calculate monthly analytics from transactions, subtracting investments from savings"""
+    """Calculate monthly analytics from transactions, subtracting monthly savings entries from savings."""
     income = sum(t.amount for t in transactions if t.type == "income")
     expense = sum(t.amount for t in transactions if t.type == "expense")
-    
-    # Calculate investments for this month
+
     investments_total = 0
     if db and year and month:
-        # Get all savings/investments
-        all_investments = db.query(models.SavingsInvestment).all()
-        
-        for inv in all_investments:
-            # Only count investments that are relevant to this month/year
-            if inv.is_recurring:
-                # For monthly recurring investments, check if investment started before or during this month
-                if inv.recurring_type == "monthly":
-                    # Only count if investment was started before or during this month
-                    if inv.purchase_date.year < year or (inv.purchase_date.year == year and inv.purchase_date.month <= month):
-                        investments_total += inv.recurring_amount if inv.recurring_amount else 0
-                # For yearly recurring investments, check if it recurs in this year
-                elif inv.recurring_type == "yearly":
-                    # Check if the last_recurring_date or purchase_date falls in the target year
-                    last_date = inv.last_recurring_date or inv.purchase_date
-                    if last_date.year == year or (inv.purchase_date.year == year and last_date.year < year):
-                        # Calculate how many times this yearly investment occurs in the target month
-                        months_since_purchase = (year - inv.purchase_date.year) * 12 + (month - inv.purchase_date.month)
-                        if months_since_purchase >= 0:
-                            # For yearly recurring, only count once per year (as monthly equivalent)
-                            if last_date.year < year or (last_date.year == year and last_date.month <= month):
-                                investments_total += (inv.recurring_amount / 12) if inv.recurring_amount else 0
-            # For non-recurring investments, only count in the month they were purchased
-            elif inv.purchase_date.year == year and inv.purchase_date.month == month:
-                investments_total += inv.initial_amount
+        investments_total = _get_monthly_savings_entry_total(db, year, month)
     
     # Calculate category distribution (expenses + investments)
     category_map = {}
@@ -258,11 +246,11 @@ def calculate_credit_card_utilization(db: Session, card_id: int) -> Union[Dict, 
         # Cycle spans two months
         if current_date.day >= card.billing_cycle_start:
             cycle_end = date(year, month + 1 if month < 12 else year + 1, 
-                            card.billing_cycle_end)
+                            card.billing_cycle_end - 1)
         else:
-            cycle_end = date(year, month, card.billing_cycle_end)
+            cycle_end = date(year, month, card.billing_cycle_end - 1)
     else:
-        cycle_end = date(year, month, card.billing_cycle_end)
+        cycle_end = date(year, month, card.billing_cycle_end - 1)
     
     # Get card transactions in this cycle
     card_transactions = db.query(models.Transaction).filter(
@@ -286,42 +274,40 @@ def calculate_credit_card_utilization(db: Session, card_id: int) -> Union[Dict, 
 
 
 def calculate_savings_comparison(db: Session) -> Dict:
-    """Calculate account savings vs investments comparison"""
-    from datetime import datetime, timedelta
-    
+    """Calculate account balance versus this month's saving-plan entries."""
+    from datetime import datetime
+
     now = datetime.now()
     current_month_start = date(now.year, now.month, 1)
-    
-    # Calculate next month's first day correctly
+
     if now.month == 12:
         current_month_end = date(now.year + 1, 1, 1)
     else:
         current_month_end = date(now.year, now.month + 1, 1)
-    
+
     current_month_transactions = db.query(models.Transaction).filter(
         models.Transaction.date >= current_month_start,
         models.Transaction.date < current_month_end
     ).all()
-    
-    # Calculate current month's account balance (savings)
+
+    # Current month account balance from actual transactions
     income = sum(t.amount for t in current_month_transactions if t.type == "income")
     expense = sum(t.amount for t in current_month_transactions if t.type == "expense")
     account_balance = income - expense
-    
-    # Get all investments
-    all_investments = db.query(models.SavingsInvestment).all()
-    
-    # Calculate investment totals
-    total_invested = sum(inv.initial_amount for inv in all_investments)
-    total_current_investment_value = sum(inv.current_value for inv in all_investments)
+
+    # Use current month saving-plan ledger entries as the savings/investment source
+    current_month_entries = db.query(models.SavingsEntry).filter(
+        models.SavingsEntry.entry_date >= current_month_start,
+        models.SavingsEntry.entry_date < current_month_end
+    ).all()
+
+    total_invested = sum(entry.amount for entry in current_month_entries)
+    total_current_investment_value = total_invested
     investment_profit_loss = total_current_investment_value - total_invested
-    
-    # Calculate cash savings (account balance excluding invested amount)
+
     cash_savings = account_balance - total_invested
-    
-    # Difference: account balance vs total invested
     difference = account_balance - total_invested
-    
+
     return {
         "account_balance": round(account_balance, 2),
         "total_invested": round(total_invested, 2),
