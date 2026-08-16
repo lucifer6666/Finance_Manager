@@ -166,7 +166,7 @@ export const SavingsPage = () => {
                               {plan.investment_type.replace('_', ' ').toUpperCase()}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-bold text-green-700">₹{getMonthlyEquivalent(plan).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                          <td className="px-6 py-4 font-bold text-green-700">₹{plan.amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                           <td className="px-6 py-4">
                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${plan.recurring_type === 'yearly' ? 'bg-indigo-100 text-indigo-800' : 'bg-cyan-100 text-cyan-800'}`}>
                               {plan.recurring_type ? plan.recurring_type.charAt(0).toUpperCase() + plan.recurring_type.slice(1) : 'One-time'}
