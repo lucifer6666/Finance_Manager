@@ -51,7 +51,7 @@ export const CardTransactionsByCycle = ({
       }
     }
     
-    const cycleStart = new Date(cycleStartYear, cycleStartMonth - 1, card.billing_cycle_start);
+    const cycleStart = new Date(cycleStartYear, cycleStartMonth - 1, card.billing_cycle_start - 1);
     
     // Calculate billing cycle end date
     let cycleEndMonth = currentMonth;
@@ -68,7 +68,7 @@ export const CardTransactionsByCycle = ({
       }
     }
     
-    const cycleEnd = new Date(cycleEndYear, cycleEndMonth - 1, card.billing_cycle_end);
+    const cycleEnd = new Date(cycleEndYear, cycleEndMonth - 1, card.billing_cycle_end - 2);
 
     return { startDate: cycleStart, endDate: cycleEnd };
   };

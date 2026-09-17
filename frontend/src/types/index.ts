@@ -111,6 +111,7 @@ export interface MonthlySummary {
   savings: number;
   investments: number;
   top_categories: Array<[string, number]>;
+  emi_expense: number;  // Total EMI expense for the month
 }
 
 export interface YearlySummary {

@@ -36,29 +36,35 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg shadow-md">
           <p className="text-sm opacity-90">Total Income</p>
-          <p className="text-3xl font-bold">₹{summary.total_income.toLocaleString()}</p>
+          <p className="text-3xl font-bold">₹{summary.total_income.toLocaleString('en-IN')}</p>
         </div>
         
         <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-lg shadow-md">
-          <p className="text-sm opacity-90">Total Expense</p>
-          <p className="text-3xl font-bold">₹{summary.total_expense.toLocaleString()}</p>
+          <p className="text-sm opacity-90">Total Expense (Excluding EMI)</p>
+          <p className="text-3xl font-bold">₹{(summary.total_expense - summary.emi_expense).toLocaleString('en-IN')} / {summary.total_income > 0 
+              ? ((summary.total_expense - summary.emi_expense) / summary.total_income * 100).toFixed(1)
+              : 0}%</p>
         </div>
         
         <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-lg shadow-md">
           <p className="text-sm opacity-90">Investments</p>
-          <p className="text-3xl font-bold">₹{(summary.investments || 0).toLocaleString()}</p>
+          <p className="text-3xl font-bold">₹{(summary.investments || 0).toLocaleString('en-IN')} / {summary.total_income > 0 
+              ? (summary.investments / summary.total_income * 100).toFixed(1)
+              : 0}%</p>
         </div>
         
         <div className={`bg-gradient-to-br ${summary.savings >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} text-white p-6 rounded-lg shadow-md`}>
-          <p className="text-sm opacity-90">Savings</p>
-          <p className="text-3xl font-bold">₹{summary.savings.toLocaleString()}</p>
+          <p className="text-sm opacity-90">Savings ₹/%</p>
+          <p className="text-3xl font-bold">₹{summary.savings.toLocaleString('en-IN')} / {summary.total_income > 0 
+              ? (summary.savings / summary.total_income * 100).toFixed(1)
+              : 0}% </p>
         </div>
         
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-md">
-          <p className="text-sm opacity-90">Savings Rate</p>
+          <p className="text-sm opacity-90">EMI Expense</p>
           <p className="text-3xl font-bold">
-            {summary.total_income > 0 
-              ? (summary.savings / summary.total_income * 100).toFixed(1)
+            ₹{summary.emi_expense.toLocaleString('en-IN')} / {summary.total_income > 0 
+              ? (summary.emi_expense / summary.total_income * 100).toFixed(1)
               : 0}%
           </p>
         </div>

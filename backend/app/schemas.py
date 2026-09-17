@@ -82,6 +82,7 @@ class MonthlySummary(BaseModel):
     savings: float
     investments: float
     top_categories: List[CategoryExpense]
+    emi_expense: float  # Total EMI expense for the month
 
 
 class YearlySummary(BaseModel):

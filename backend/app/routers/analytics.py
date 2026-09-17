@@ -142,7 +142,8 @@ def get_current_summary(
         total_expense=summary_data["total_expense"],
         savings=summary_data["savings"],
         investments=summary_data.get("investments", 0.0),
-        top_categories=top_categories
+        top_categories=top_categories,
+        emi_expense=summary_data.get("emi_expense", 0.0),
     )
     
     insights = [schemas.Insight(**insight) for insight in insights_data]

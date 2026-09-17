@@ -18,6 +18,9 @@ export const AnalyticsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<any>(null);
   const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
+  const [selectedYearlyCategory, setSelectedYearlyCategory] = useState<string | null>(null);
+  const [selectedYearlyCategoryDetails, setSelectedYearlyCategoryDetails] = useState<any>(null);
+  const [loadingYearlyCategoryDetails, setLoadingYearlyCategoryDetails] = useState(false);
   const [showPaymentMethodsBreakdown, setShowPaymentMethodsBreakdown] = useState(false);
   const [paymentMethodsDetails, setPaymentMethodsDetails] = useState<any>(null);
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
@@ -282,6 +285,24 @@ export const AnalyticsPage = () => {
     }
   };
 
+  const handleYearlyCategoryClick = async (categoryName: string) => {
+    setSelectedYearlyCategory(categoryName);
+    setLoadingYearlyCategoryDetails(true);
+    try {
+      const response = await analyticsApi.getCategoryBreakdown(year, 0, categoryName);
+      setSelectedYearlyCategoryDetails(response.data);
+    } catch (error) {
+      console.error('Failed to fetch yearly category breakdown:', error);
+      setSelectedYearlyCategoryDetails({
+        descriptions: [],
+        payment_methods: [],
+        card_transactions: []
+      });
+    } finally {
+      setLoadingYearlyCategoryDetails(false);
+    }
+  };
+
   const handleShowPaymentMethodsBreakdown = async () => {
     setShowPaymentMethodsBreakdown(true);
     setLoadingPaymentMethods(true);
@@ -443,35 +464,65 @@ export const AnalyticsPage = () => {
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <CategoryPieChart 
+                  <CategoryPieChart
                     data={yearlyCategories.top_categories.map((cat: any) => ({
                       name: cat.name,
                       value: cat.amount
-                    }))} 
+                    }))}
                     title="Category Distribution"
+                    onCategoryClick={handleYearlyCategoryClick}
+                    selectedCategory={selectedYearlyCategory || undefined}
                   />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-4 text-black">Category Breakdown</h3>
                   <div className="space-y-2">
                     {yearlyCategories.top_categories.map((category: any) => (
-                      <div key={category.name} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <button
+                        key={category.name}
+                        onClick={() => handleYearlyCategoryClick(category.name)}
+                        type="button"
+                        className={`w-full flex justify-between items-center p-3 rounded cursor-pointer transition text-left ${
+                          selectedYearlyCategory === category.name
+                            ? 'bg-blue-100 border-2 border-blue-500'
+                            : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                        }`}
+                      >
                         <span className="text-black font-medium">{category.name}</span>
                         <div className="text-right">
                           <p className="text-red-600 font-bold">{formatCurrency(category.amount)}</p>
                           {category.name !== 'Investments' && (
                             <p className="text-sm text-gray-600">
-                              {yearlyCategories.total_expense > 0 
+                              {yearlyCategories.total_expense > 0
                                 ? ((category.amount / yearlyCategories.total_expense) * 100).toFixed(1)
                                 : 0}%
                             </p>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Yearly Category Breakdown Details */}
+          {selectedYearlyCategory && (
+            <div className="mt-6">
+              {loadingYearlyCategoryDetails ? (
+                <div className="flex items-center justify-center p-8">
+                  <p className="text-black text-lg">Loading category details...</p>
+                </div>
+              ) : selectedYearlyCategoryDetails ? (
+                <CategoryBreakdownDetail
+                  categoryName={selectedYearlyCategory}
+                  descriptions={selectedYearlyCategoryDetails.descriptions || []}
+                  paymentMethods={selectedYearlyCategoryDetails.payment_methods || []}
+                  cardTransactions={selectedYearlyCategoryDetails.card_transactions || []}
+                  onClose={() => setSelectedYearlyCategory(null)}
+                />
+              ) : null}
             </div>
           )}
 

@@ -22,6 +22,7 @@ def calculate_monthly_summary(transactions: List[models.Transaction], db: Sessio
     """Calculate monthly analytics from transactions, subtracting monthly savings entries from savings."""
     income = sum(t.amount for t in transactions if t.type == "income")
     expense = sum(t.amount for t in transactions if t.type == "expense")
+    emi_expense = sum(t.amount for t in transactions if t.type == "expense" and t.category.lower() == "emi")
 
     investments_total = 0
     if db and year and month:
@@ -48,7 +49,8 @@ def calculate_monthly_summary(transactions: List[models.Transaction], db: Sessio
         "total_expense": round(expense, 2),
         "investments": round(investments_total, 2),
         "savings": round(income - expense - investments_total, 2),
-        "top_categories": top_categories
+        "top_categories": top_categories,
+        "emi_expense": round(emi_expense, 2)
     }
 
 

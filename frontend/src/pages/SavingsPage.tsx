@@ -127,6 +127,128 @@ export const SavingsPage = () => {
             </div>
           </div>
 
+          {editingPlanId && editingPlan && (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-black mb-4">Edit Saving Plan</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">Plan Name</label>
+                  <input
+                    type="text"
+                    value={editingPlan.name || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                    placeholder="Plan name"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">Investment Type</label>
+                  <select
+                    value={editingPlan.investment_type || 'fixed_deposit'}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, investment_type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                  >
+                    <option value="mutual_fund">Mutual Fund</option>
+                    <option value="life_insurance">Life Insurance</option>
+                    <option value="fixed_deposit">Fixed Deposit</option>
+                    <option value="stock">Stock</option>
+                    <option value="crypto">Crypto</option>
+                    <option value="recurring_savings">Recurring Savings</option>
+                    <option value="ppf">PPF</option>
+                    <option value="nsc">NSC</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">Amount</label>
+                  <input
+                    type="number"
+                    value={editingPlan.amount ?? 0}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, amount: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                    placeholder="Amount"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">Frequency</label>
+                  <select
+                    value={editingPlan.recurring_type || 'monthly'}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, recurring_type: e.target.value as 'monthly' | 'yearly' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">Due day</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={editingPlan.due_date ?? 1}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, due_date: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                    placeholder="Due day"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    value={editingPlan.start_date || new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, start_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-black mb-2">End Date</label>
+                  <input
+                    type="date"
+                    value={editingPlan.end_date || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, end_date: e.target.value || null })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm font-medium text-black">
+                  <input
+                    type="checkbox"
+                    checked={!!editingPlan.is_active}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, is_active: e.target.checked })}
+                  />
+                  Active
+                </label>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-black mb-2">Description</label>
+                <textarea
+                  value={editingPlan.description || ''}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
+                  placeholder="Description"
+                  className="mt-4 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
+                  rows={3}
+                />
+              </div>
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={handleSaveEdit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingPlanId(null);
+                    setEditingPlan(null);
+                  }}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl shadow-md overflow-hidden">
             <h2 className="text-2xl font-bold text-black p-6 pb-2">Saving Plans</h2>
             {plans.length === 0 ? (
@@ -201,103 +323,7 @@ export const SavingsPage = () => {
             )}
           </div>
 
-          {editingPlanId && editingPlan && (
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-xl font-bold text-black mb-4">Edit Saving Plan</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={editingPlan.name || ''}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                  placeholder="Plan name"
-                />
-                <select
-                  value={editingPlan.investment_type || 'fixed_deposit'}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, investment_type: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                >
-                  <option value="mutual_fund">Mutual Fund</option>
-                  <option value="life_insurance">Life Insurance</option>
-                  <option value="fixed_deposit">Fixed Deposit</option>
-                  <option value="stock">Stock</option>
-                  <option value="crypto">Crypto</option>
-                  <option value="recurring_savings">Recurring Savings</option>
-                  <option value="ppf">PPF</option>
-                  <option value="nsc">NSC</option>
-                  <option value="other">Other</option>
-                </select>
-                <input
-                  type="number"
-                  value={editingPlan.amount ?? 0}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, amount: Number(e.target.value) })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                  placeholder="Amount"
-                />
-                <select
-                  value={editingPlan.recurring_type || 'monthly'}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, recurring_type: e.target.value as 'monthly' | 'yearly' })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={editingPlan.due_date ?? 1}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, due_date: Number(e.target.value) })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                  placeholder="Due day"
-                />
-                <input
-                  type="date"
-                  value={editingPlan.start_date || new Date().toISOString().slice(0, 10)}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, start_date: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                />
-                <input
-                  type="date"
-                  value={editingPlan.end_date || ''}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, end_date: e.target.value || null })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                />
-                <label className="flex items-center gap-2 text-sm font-medium text-black">
-                  <input
-                    type="checkbox"
-                    checked={!!editingPlan.is_active}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, is_active: e.target.checked })}
-                  />
-                  Active
-                </label>
-              </div>
-              <textarea
-                value={editingPlan.description || ''}
-                onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
-                placeholder="Description"
-                className="mt-4 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-black"
-                rows={3}
-              />
-              <div className="mt-4 flex gap-3">
-                <button
-                  onClick={handleSaveEdit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg"
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingPlanId(null);
-                    setEditingPlan(null);
-                  }}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+          
         </div>
       )}
 
@@ -373,7 +399,7 @@ export const SavingsPage = () => {
                     await refreshPlansAndEntries(year, month);
                   }
                 }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-white"
               />
             </div>
           </div>

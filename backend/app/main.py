@@ -1,4 +1,5 @@
 import json
+import threading
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import warnings
@@ -12,39 +13,47 @@ from .utils.auto_increment import run_startup_checks
 # Create all database tables
 Base.metadata.create_all(bind=engine)
 
-# Run startup checks for auto-increment entries
-db = SessionLocal()
-try:
-    startup_check_results = run_startup_checks(db)
-    print("\n" + "="*60)
-    print("AUTO-INCREMENT STARTUP CHECKS")
-    print("="*60)
-    print(f"✓ Salary entries: {startup_check_results['salaries']['message']}")
-    print(f"✓ Recurring investments: {startup_check_results['investments']['message']}")
-    print(f"✓ EMI entries: {startup_check_results['emis']['message']}")
-    print(f"✓ Saving plans: {startup_check_results['saving_plans']['message']}")
-    print(f"✓ Total auto-entries processed: {startup_check_results['all_processed']}")
-    print("="*60 + "\n")
-except Exception as e:
-    print(f"⚠ Warning: Startup checks encountered an error: {e}")
-finally:
-    db.close()
 
-# Google Drive Backup on startup
-try:
-    with open('config.json') as f:
-        config = json.load(f)
-    print("\n" + "="*60)
-    google_drive_config = config.get("google_drive", {})
-    backup = GDriveBackup(google_drive_config)
-    # Backup only if 7+ days since last backup
-    backup.backup_local_db(google_drive_config.get("backup_file", './finance.db'))
-    print("="*60 + "\n")
-    config['google_drive']['last_backup'] = backup.last_backup
-    with open("config.json", "w") as f:
-        json.dump(config, f)
-except Exception as e:
-    print(f"⚠ Warning: Startup checks encountered an error: {e}")
+def _run_startup_checks():
+    db = SessionLocal()
+    try:
+        startup_check_results = run_startup_checks(db)
+        print("\n" + "="*60)
+        print("AUTO-INCREMENT STARTUP CHECKS")
+        print("="*60)
+        print(f"✓ Salary entries: {startup_check_results['salaries']['message']}")
+        print(f"✓ Recurring investments: {startup_check_results['investments']['message']}")
+        print(f"✓ EMI entries: {startup_check_results['emis']['message']}")
+        print(f"✓ Saving plans: {startup_check_results['saving_plans']['message']}")
+        print(f"✓ Total auto-entries processed: {startup_check_results['all_processed']}")
+        print("="*60 + "\n")
+    except Exception as e:
+        print(f"⚠ Warning: Startup checks encountered an error: {e}")
+    finally:
+        db.close()
+
+
+def _run_gdrive_backup():
+    try:
+        with open('config.json') as f:
+            config = json.load(f)
+        print("\n" + "="*60)
+        google_drive_config = config.get("google_drive", {})
+        backup = GDriveBackup(google_drive_config)
+        # Backup only if 7+ days since last backup
+        backup.backup_local_db(google_drive_config.get("backup_file", './finance.db'))
+        print("="*60 + "\n")
+        config['google_drive']['last_backup'] = backup.last_backup
+        with open("config.json", "w") as f:
+            json.dump(config, f)
+    except Exception as e:
+        print(f"⚠ Warning: Google Drive backup encountered an error: {e}")
+
+
+def _run_background_startup_tasks():
+    _run_startup_checks()
+    _run_gdrive_backup()
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -52,6 +61,12 @@ app = FastAPI(
     description="A local-only web application to track income, expenses, and manage credit cards",
     version="1.0.0"
 )
+
+
+@app.on_event("startup")
+def _kick_off_background_startup_tasks():
+    # Run in a background thread so API startup isn't delayed by these checks/backup
+    threading.Thread(target=_run_background_startup_tasks, daemon=True).start()
 
 # Add CORS middleware to allow frontend requests
 app.add_middleware(

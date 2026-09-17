@@ -14,10 +14,11 @@ interface CreditCardForm {
 }
 
 export const CreditCardsPage = () => {
-  const { cards, addCard, deleteCard } = useCreditCards();
+  const { cards, addCard, updateCard, deleteCard } = useCreditCards();
   const { payments, fetchPayments, addPayment, deletePayment } = usePayments();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingCardId, setEditingCardId] = useState<number | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
@@ -60,14 +61,21 @@ export const CreditCardsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addCard({
+      const cardData = {
         name: formData.name,
         bank_name: formData.bank_name,
         billing_cycle_start: Number.parseInt(formData.billing_cycle_start),
         billing_cycle_end: Number.parseInt(formData.billing_cycle_end),
         due_date: Number.parseInt(formData.due_date),
         credit_limit: Number.parseFloat(formData.credit_limit),
-      });
+      };
+
+      if (editingCardId !== null) {
+        await updateCard(editingCardId, cardData);
+      } else {
+        await addCard(cardData);
+      }
+
       setFormData({
         name: '',
         bank_name: '',
@@ -76,10 +84,37 @@ export const CreditCardsPage = () => {
         due_date: '5',
         credit_limit: '',
       });
+      setEditingCardId(null);
       setShowForm(false);
     } catch (error) {
-      console.error('Failed to add credit card:', error);
+      console.error('Failed to save credit card:', error);
     }
+  };
+
+  const handleEdit = (card: typeof cards[number]) => {
+    setEditingCardId(card.id);
+    setFormData({
+      name: card.name,
+      bank_name: card.bank_name,
+      billing_cycle_start: String(card.billing_cycle_start),
+      billing_cycle_end: String(card.billing_cycle_end),
+      due_date: String(card.due_date),
+      credit_limit: String(card.credit_limit),
+    });
+    setShowForm(true);
+  };
+
+  const handleCancelForm = () => {
+    setEditingCardId(null);
+    setFormData({
+      name: '',
+      bank_name: '',
+      billing_cycle_start: '1',
+      billing_cycle_end: '30',
+      due_date: '5',
+      credit_limit: '',
+    });
+    setShowForm(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -117,7 +152,7 @@ export const CreditCardsPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold text-black">Credit Cards</h1>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={showForm ? handleCancelForm : () => setShowForm(true)}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
           {showForm ? 'Cancel' : '+ Add Card'}
@@ -126,7 +161,9 @@ export const CreditCardsPage = () => {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 text-black">Add New Credit Card</h2>
+          <h2 className="text-2xl font-bold mb-4 text-black">
+            {editingCardId !== null ? 'Edit Credit Card' : 'Add New Credit Card'}
+          </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -221,8 +258,9 @@ export const CreditCardsPage = () => {
           <button
             type="submit"
             className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600"
+            style={{ marginTop: 'inherit' }}
           >
-            Add Credit Card
+            {editingCardId !== null ? 'Update Credit Card' : 'Add Credit Card'}
           </button>
         </form>
       )}
@@ -367,6 +405,13 @@ export const CreditCardsPage = () => {
                     <td className="px-6 py-4 text-sm text-black">₹{card.credit_limit.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-black">{card.billing_cycle_start}-{card.billing_cycle_end}</td>
                     <td className="px-6 py-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(card)}
+                        className="text-blue-600 hover:text-blue-800 mr-4"
+                      >
+                        Edit
+                      </button>
                       <button
                         onClick={() => handleDelete(card.id)}
                         className="text-red-600 hover:text-red-800"
