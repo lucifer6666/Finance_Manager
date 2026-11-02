@@ -60,5 +60,16 @@ export const useTransactions = (year: number, month: number) => {
     }
   };
 
-  return { transactions, loading, error, addTransaction, updateTransaction, deleteTransaction };
+  const setTransactionEvent = async (id: number, eventId: number | null) => {
+    try {
+      const response = await transactionApi.setEvent(id, eventId);
+      setTransactions(prev => prev.map(t => t.id === id ? response.data : t));
+    } catch (err) {
+      setError('Failed to link transaction to event');
+      console.error(err);
+      throw err;
+    }
+  };
+
+  return { transactions, loading, error, addTransaction, updateTransaction, deleteTransaction, setTransactionEvent };
 };

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from datetime import date
 from typing import List, Optional
-from .. import crud, schemas
+from .. import crud, models, schemas
 from ..database import get_db
 
 router = APIRouter()
@@ -77,6 +77,24 @@ def update_transaction(
     db_transaction = crud.update_transaction(db, transaction_id, transaction_update)
     if not db_transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    return db_transaction
+
+
+@router.put("/{transaction_id}/event", response_model=schemas.Transaction)
+def link_transaction_to_event(
+    transaction_id: int,
+    link: schemas.TransactionEventLink,
+    db: Session = Depends(get_db)
+):
+    """Link a transaction to an event, or pass event_id=null to unlink it"""
+    db_transaction = crud.get_transaction(db, transaction_id)
+    if not db_transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if link.event_id is not None and not db.query(models.Event).filter(models.Event.id == link.event_id).first():
+        raise HTTPException(status_code=404, detail="Event not found")
+    db_transaction.event_id = link.event_id
+    db.commit()
+    db.refresh(db_transaction)
     return db_transaction
 
 

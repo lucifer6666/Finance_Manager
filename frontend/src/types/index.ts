@@ -8,7 +8,40 @@ export interface Transaction {
   payment_method: 'upi' | 'cash' | 'card' | 'bank';
   credit_card_id?: number;
   is_payment?: boolean;
+  event_id?: number | null;
   created_at: string;
+}
+
+export interface EventItem {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  transaction_count: number;
+  total_expense: number;
+}
+
+export interface EventAnalysis {
+  event: { id: number; name: string; start_date: string; end_date: string };
+  total_expense: number;
+  total_income: number;
+  transaction_count: number;
+  duration_days: number;
+  avg_daily_expense: number;
+  categories: { name: string; amount: number }[];
+  payment_methods: { name: string; amount: number }[];
+  daily: { date: string; amount: number }[];
+  transactions: {
+    id: number;
+    date: string;
+    amount: number;
+    type: 'income' | 'expense';
+    category: string;
+    description?: string | null;
+    payment_method: string;
+    is_payment: boolean;
+  }[];
 }
 
 export interface CreditCardPayment {

@@ -1,5 +1,7 @@
 export { AddTransactionForm } from './AddTransactionForm';
 export { TransactionTable } from './TransactionTable';
+export { AddEventForm } from './AddEventForm';
+export { EventsAnalytics } from './EventsAnalytics';
 export { CategoryPieChart } from './CategoryPieChart';
 export { MonthlyChart } from './MonthlyChart';
 export { CreditCardSummary } from './CreditCardSummary';

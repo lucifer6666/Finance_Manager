@@ -1,19 +1,29 @@
-import { Transaction, CreditCard } from '../types';
+import { Transaction, CreditCard, EventItem } from '../types';
 
 interface TransactionTableProps {
   transactions: Transaction[];
   cards?: CreditCard[];
+  events?: EventItem[];
+  onEventChange?: (id: number, eventId: number | null) => Promise<void>;
   onDelete?: (id: number) => Promise<void>;
   loading?: boolean;
 }
 
-export const TransactionTable = ({ transactions, cards = [], onDelete, loading = false }: TransactionTableProps) => {
+export const TransactionTable = ({ transactions, cards = [], events = [], onEventChange, onDelete, loading = false }: TransactionTableProps) => {
   const cardMap = new Map(cards.map(card => [card.id, card]));
 
   const getCardName = (cardId?: number) => {
     if (!cardId) return '-';
     const card = cardMap.get(cardId);
     return card ? card.name : '-';
+  };
+
+  const handleEventChange = async (id: number, value: string) => {
+    try {
+      await onEventChange?.(id, value === '' ? null : Number(value));
+    } catch (error) {
+      console.error('Failed to link transaction to event:', error);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -44,6 +54,7 @@ export const TransactionTable = ({ transactions, cards = [], onDelete, loading =
             <th className="px-6 py-3 text-left text-sm font-semibold text-black">Category</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-black">Type</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-black">Card</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-black">Event</th>
             <th className="px-6 py-3 text-right text-sm font-semibold text-black">Amount</th>
             <th className="px-6 py-3 text-center text-sm font-semibold text-black">Actions</th>
           </tr>
@@ -69,6 +80,19 @@ export const TransactionTable = ({ transactions, cards = [], onDelete, loading =
                 ) : (
                   '-'
                 )}
+              </td>
+              <td className="px-6 py-4 text-sm">
+                <select
+                  value={transaction.event_id ?? ''}
+                  onChange={(e) => handleEventChange(transaction.id, e.target.value)}
+                  disabled={loading || !onEventChange}
+                  className="px-2 py-1 border rounded-md text-white bg-gray-700 max-w-[10rem]"
+                >
+                  <option value="">No event</option>
+                  {events.map(ev => (
+                    <option key={ev.id} value={ev.id}>{ev.name}</option>
+                  ))}
+                </select>
               </td>
               <td className={`px-6 py-4 text-sm font-semibold text-right ${
                 transaction.type === 'income' ? 'text-green-600' : 'text-red-600'

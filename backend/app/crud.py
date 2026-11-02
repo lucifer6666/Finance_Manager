@@ -52,7 +52,11 @@ def update_transaction(db: Session, transaction_id: int, transaction_update: sch
     """Update a transaction"""
     db_transaction = get_transaction(db, transaction_id)
     if db_transaction:
-        for key, value in transaction_update.dict().items():
+        # Full-replace update, but don't wipe the event link when the client didn't send it
+        data = transaction_update.dict()
+        if "event_id" not in transaction_update.model_fields_set:
+            data.pop("event_id")
+        for key, value in data.items():
             setattr(db_transaction, key, value)
         db.commit()
         db.refresh(db_transaction)

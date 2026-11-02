@@ -17,6 +17,18 @@ class PaymentMethod(str, enum.Enum):
     BANK = "bank"
 
 
+class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    transactions = relationship("Transaction", back_populates="event")
+
+
 class Transaction(Base):
     __tablename__ = "transactions"
 
@@ -29,9 +41,11 @@ class Transaction(Base):
     payment_method = Column(String, nullable=False)  # "cash", "card", "upi", "bank"
     credit_card_id = Column(Integer, ForeignKey("credit_cards.id"), nullable=True)
     is_payment = Column(Integer, default=0, nullable=False)  # 0=regular transaction, 1=credit card payment
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=True)  # None = not linked to any event
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
+    event = relationship("Event", back_populates="transactions")
     credit_card = relationship("CreditCard", back_populates="transactions")
     payment_record = relationship("CreditCardPayment", back_populates="transaction", uselist=False)
 

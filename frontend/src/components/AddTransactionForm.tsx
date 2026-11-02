@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Transaction, CreditCard } from '../types';
+import { Transaction, CreditCard, EventItem } from '../types';
 
 interface AddTransactionFormProps {
   cards?: CreditCard[];
+  events?: EventItem[];
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => Promise<void | Transaction>;
   loading?: boolean;
 }
 
-export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTransactionFormProps) => {
+export const AddTransactionForm = ({ cards = [], events = [], onAdd, loading = false }: AddTransactionFormProps) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     amount: '' as string | number,
@@ -17,6 +18,7 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
     payment_method: 'upi' as 'upi' | 'cash' | 'card' | 'bank',
     credit_card_id: undefined as undefined | number,
     is_payment: false,
+    event_id: null as null | number,
   });
 
   const categories = {
@@ -29,6 +31,9 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
     setFormData(prev => {
       if (inputType === 'checkbox') {
         return { ...prev, [name]: (e.target as HTMLInputElement).checked };
+      }
+      if (name === 'event_id') {
+        return { ...prev, event_id: value === '' ? null : Number(value) };
       }
       if (name === 'amount') {
         const numValue = value === '' ? '' : Number.parseFloat(value);
@@ -56,6 +61,7 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
         payment_method: 'upi',
         credit_card_id: undefined,
         is_payment: false,
+        event_id: null,
       });
     } catch (error) {
       console.error('Failed to add transaction:', error);
@@ -154,6 +160,22 @@ export const AddTransactionForm = ({ cards = [], onAdd, loading = false }: AddTr
             className="w-full px-3 py-2 border rounded-md text-white bg-gray-700 placeholder-gray-400"
           />
         </div>
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="event_id" className="block text-sm font-bold text-black mb-1">Event</label>
+        <select
+          id="event_id"
+          name="event_id"
+          value={formData.event_id ?? ''}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border rounded-md text-white bg-gray-700"
+        >
+          <option value="">No event</option>
+          {events.map(ev => (
+            <option key={ev.id} value={ev.id}>{ev.name}</option>
+          ))}
+        </select>
       </div>
 
       {formData.payment_method === 'card' && (

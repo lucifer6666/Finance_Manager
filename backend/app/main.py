@@ -2,16 +2,28 @@ import json
 import threading
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 import warnings
 warnings.filterwarnings("ignore")
 
 from backup_db import GDriveBackup
 from .database import engine, Base, SessionLocal
-from .routers import transactions, cards, analytics, savings, salary, payments, auth, emi
+from .routers import transactions, cards, analytics, savings, salary, payments, auth, emi, events
 from .utils.auto_increment import run_startup_checks
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
+
+
+def _ensure_transaction_event_column():
+    """create_all doesn't alter existing tables, so add transactions.event_id when upgrading an old DB"""
+    columns = [c["name"] for c in inspect(engine).get_columns("transactions")]
+    if "event_id" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN event_id INTEGER REFERENCES events(id)"))
+
+
+_ensure_transaction_event_column()
 
 
 def _run_startup_checks():
@@ -82,6 +94,12 @@ app.include_router(
     transactions.router,
     prefix="/api/transactions",
     tags=["Transactions"]
+)
+
+app.include_router(
+    events.router,
+    prefix="/api/events",
+    tags=["Events"]
 )
 
 app.include_router(

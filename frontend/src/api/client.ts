@@ -1,6 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 import {
   Transaction,
+  EventItem,
+  EventAnalysis,
   CreditCard,
   CreditCardPayment,
   SavingsInvestment,
@@ -49,6 +51,27 @@ export const transactionApi = {
   
   delete: (id: number) =>
     axiosInstance.delete(`/transactions/${id}`),
+
+  setEvent: (id: number, eventId: number | null) =>
+    axiosInstance.put<Transaction>(`/transactions/${id}/event`, { event_id: eventId }),
+};
+
+// Event APIs
+export const eventApi = {
+  getAll: () =>
+    axiosInstance.get<EventItem[]>('/events/'),
+
+  create: (event: { name: string; start_date: string; end_date: string }) =>
+    axiosInstance.post<EventItem>('/events/', event),
+
+  update: (id: number, event: { name?: string; start_date?: string; end_date?: string }) =>
+    axiosInstance.put<EventItem>(`/events/${id}`, event),
+
+  delete: (id: number) =>
+    axiosInstance.delete(`/events/${id}`),
+
+  getAnalysis: (id: number) =>
+    axiosInstance.get<EventAnalysis>(`/events/${id}/analysis`),
 };
 
 // Credit Card APIs

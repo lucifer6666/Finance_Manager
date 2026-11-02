@@ -12,10 +12,41 @@ class TransactionBase(BaseModel):
     payment_method: str  # "cash", "card", "upi", "bank"
     credit_card_id: Optional[int] = None
     is_payment: bool = False  # whether this is a credit card payment
+    event_id: Optional[int] = None  # linked event; None = no event
 
 
 class TransactionCreate(TransactionBase):
     pass
+
+
+class EventBase(BaseModel):
+    name: str
+    start_date: date
+    end_date: date
+
+
+class EventCreate(EventBase):
+    pass
+
+
+class EventUpdate(BaseModel):
+    name: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+
+class Event(EventBase):
+    id: int
+    created_at: datetime
+    transaction_count: int = 0
+    total_expense: float = 0.0
+
+    class Config:
+        from_attributes = True
+
+
+class TransactionEventLink(BaseModel):
+    event_id: Optional[int] = None
 
 
 class Transaction(TransactionBase):

@@ -47,6 +47,7 @@ def get_monthly_analytics(
         total_expense=summary["total_expense"],
         savings=summary["savings"],
         investments=summary["investments"],
+        emi_expense=summary["emi_expense"],
         top_categories=categories
     )
 

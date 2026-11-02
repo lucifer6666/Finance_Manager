@@ -1,13 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTransactions, useCreditCards } from '../hooks';
-import { AddTransactionForm, TransactionTable } from '../components';
+import { AddTransactionForm, AddEventForm, TransactionTable } from '../components';
+import { eventApi } from '../api/client';
+import { EventItem } from '../types';
 
 export const TransactionsPage = () => {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const { transactions, addTransaction, deleteTransaction } = useTransactions(year, month);
+  const { transactions, addTransaction, deleteTransaction, setTransactionEvent } = useTransactions(year, month);
   const { cards } = useCreditCards();
+  const [events, setEvents] = useState<EventItem[]>([]);
+
+  const loadEvents = useCallback(async () => {
+    try {
+      const response = await eventApi.getAll();
+      setEvents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch events:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  const handleAddEvent = async (event: { name: string; start_date: string; end_date: string }) => {
+    await eventApi.create(event);
+    await loadEvents();
+  };
 
   const handleAddTransaction = async (transaction: any): Promise<void> => {
     await addTransaction(transaction);
@@ -57,9 +78,17 @@ export const TransactionsPage = () => {
         </div>
       </div>
 
-      <AddTransactionForm cards={cards} onAdd={handleAddTransaction} />
+      <AddEventForm onAdd={handleAddEvent} />
 
-      <TransactionTable transactions={transactions} cards={cards} onDelete={deleteTransaction} />
+      <AddTransactionForm cards={cards} events={events} onAdd={handleAddTransaction} />
+
+      <TransactionTable
+        transactions={transactions}
+        cards={cards}
+        events={events}
+        onEventChange={setTransactionEvent}
+        onDelete={deleteTransaction}
+      />
     </div>
   );
 };

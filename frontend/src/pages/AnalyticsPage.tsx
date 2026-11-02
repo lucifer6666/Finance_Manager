@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { analyticsApi, transactionApi, paymentApi, savingsApi, creditCardApi } from '../api/client';
-import { MonthlyChart, CategoryPieChart, CategoryBreakdownDetail, PaymentMethodsBreakdown } from '../components';
+import { MonthlyChart, CategoryPieChart, CategoryBreakdownDetail, PaymentMethodsBreakdown, EventsAnalytics } from '../components';
 
 export const AnalyticsPage = () => {
   const currentDate = new Date();
   const [year, setYear] = useState(currentDate.getFullYear());
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
-  const [viewMode, setViewMode] = useState<'trends' | 'monthly' | 'export'>('trends');
+  const [viewMode, setViewMode] = useState<'trends' | 'monthly' | 'events' | 'export'>('trends');
   const [spendingTrends, setSpendingTrends] = useState<any[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<any>(null);
   const [_insights, setInsights] = useState<any[]>([]);
@@ -373,6 +373,16 @@ export const AnalyticsPage = () => {
           }`}
         >
           📅 Monthly Analysis
+        </button>
+        <button
+          onClick={() => setViewMode('events')}
+          className={`px-4 py-2 rounded-md font-semibold transition ${
+            viewMode === 'events'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-black hover:bg-gray-300'
+          }`}
+        >
+          🎉 Events
         </button>
         <button
           onClick={() => setViewMode('export')}
@@ -768,6 +778,9 @@ export const AnalyticsPage = () => {
           )}
         </div>
       )}
+
+      {/* Events View */}
+      {viewMode === 'events' && <EventsAnalytics />}
 
       {/* Export View */}
       {viewMode === 'export' && (

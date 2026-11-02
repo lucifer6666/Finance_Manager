@@ -54,7 +54,7 @@ export const Dashboard = () => {
         </div>
         
         <div className={`bg-gradient-to-br ${summary.savings >= 0 ? 'from-blue-500 to-blue-600' : 'from-red-500 to-red-600'} text-white p-6 rounded-lg shadow-md`}>
-          <p className="text-sm opacity-90">Savings ₹/%</p>
+          <p className="text-sm opacity-90">Savings</p>
           <p className="text-3xl font-bold">₹{summary.savings.toLocaleString('en-IN')} / {summary.total_income > 0 
               ? (summary.savings / summary.total_income * 100).toFixed(1)
               : 0}% </p>
